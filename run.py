@@ -1,5 +1,8 @@
 import asyncio
 from aiogram import Bot, Dispatcher
+import pymysql
+
+db = pymysql.connect()
 
 # Импортируем настройки и модули для клавиатур и обработчиков
 import config

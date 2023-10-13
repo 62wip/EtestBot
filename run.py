@@ -11,6 +11,7 @@ def on_startup(dp):
     try:
         db = pymysql.connect(
             host=HOST,
+            port=3306,
             user=USER,
             password=PASSWORD,
             database=DB_NAME,

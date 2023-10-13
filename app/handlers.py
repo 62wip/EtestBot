@@ -1,18 +1,32 @@
 from typing import Any
 from aiogram import Router
-from aiogram.types import Message, CallbackQuery
+from aiogram.dispatcher import FSMContext
+from aiogram.types import Message, CallbackQuery 
 from aiogram.filters import Filter, Command
 
 import app.keyboards as kb
+from app.database.requests import *
+from app.database.models import *
+from run import dp
 
 router = Router()
+
+
+async def check_first_use(message):
+    db = dp["db"]
+    if checking_first_use(db, message.from_user.id):
+        await message.answer('Вижу ты тут <u>новенький</u>, позволь узнать твои данные, которые <b>будут отображаться у других пользователей</b>!', parse_mode="HTML")
+        await message.answer('Укажи свое <i>ФИО</i>.', parse_mode="HTML")
+        await QuestionState.waiting_for_fio.set() # Устанавливаем состояние ожидания ФИО
+
+
 
 # Обработчик команды /start
 @router.message(Command('start'))
 async def start_command(message: Message):
     # Отправляем сообщение в ответ на команду /start
     await message.answer(f'Здравствуй,<u>{message.from_user.first_name}</u>! Это бот создан специально для <i>создания/решения тестов</i> онлайн. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
-
+    await QuestionState.waiting_for_name.set()
 # Обработчик команды /how_to_use
 @router.message(Command('how_to_use'))
 async def how_to_use_command(message: Message):
@@ -59,3 +73,44 @@ async def commands_command(message: Message):
 async def commands_command(message: Message):
     # Отправляем сообщение в ответ на команду /feedback
     await message.answer('feedback', parse_mode="HTML")
+
+
+@router.message_handler(lambda message: message.text, state=QuestionState.waiting_for_fio)
+async def process_name(message: Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text[0] == '/':
+            await message.answer('Укажи <u>ФИО</u>, а не команду.', parse_mode="HTML")
+            await QuestionState.waiting_for_fio.set() # Устанавливаем состояние ожидания ФИО
+        else:
+            data['fio'] = message.text
+            await message.answer(f'Отлично, <u>{data["fio"]}</u>! Теперь укажи <i>кто ты</i>.', parse_mode="HTML", reply_markup=kb.set_status)
+            await QuestionState.waiting_for_status.set()  # Устанавливаем состояние ожидания статуса
+
+@router.message_handler(lambda message: message.text, state=QuestionState.waiting_for_status)
+async def process_name(message: Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text == 'Проподователь':
+            data['status'] = 't'
+            data['group'] = None
+            await message.answer(f'Отлично, <u>{data["fio"]}</u>! Регестрация завершена.', parse_mode="HTML")
+            user = User(message.from_user.id, message.from_user.username, data['fio'], data['status'], data['group'], '', '')
+            print(user)
+        elif message.text == 'Ученик':
+            data['status'] = 's'
+            await message.answer(f'Отлично, <u>{data["fio"]}</u>! Осталось установить <i>группу или класс</i>.', parse_mode="HTML", reply_markup=kb.set_status)
+            await QuestionState.waiting_for_group.set() # Устанавливаем состояние ожидания группы
+        else:
+            await message.answer(f'Укажите ваш <u>статус</u>', parse_mode="HTML", reply_markup=kb.set_status)
+            await QuestionState.waiting_for_status.set() # Устанавливаем состояние ожидания статуса
+
+@router.message_handler(lambda message: message.text, state=QuestionState.waiting_for_group)
+async def process_name(message: Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text[0] == '/':
+            await message.answer('Укажи <u>группу/класс</u>, а не команду.', parse_mode="HTML")
+            await QuestionState.waiting_for_group.set() # Устанавливаем состояние ожидания группы
+        else:
+            data['group'] = message.text
+            await message.answer(f'Отлично, <u>{data["fio"]}</u>! Регестрация завершена.', parse_mode="HTML")
+            user = User(message.from_user.id, message.from_user.username, data['fio'], data['status'], data['group'], '', '')
+            print(user)

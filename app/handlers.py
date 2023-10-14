@@ -5,13 +5,14 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Filter, Command
 
 import app.keyboards as kb
+from app.state import Form
 from app.database.requests import *
 from app.database.models import *
 
 
 router = Router()
 
-async def check_first_use(message, state: FSMContext):
+async def check_first_use(message, state: FSMContext) -> None:
     from run import dp
     db = dp["db"]
     if checking_first_use(db, message.from_user.id):
@@ -24,13 +25,14 @@ async def check_first_use(message, state: FSMContext):
 
 # Обработчик команды /start
 @router.message(Command('start'))
-async def start_command(message: Message):
+async def start_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /start
     await message.answer(f'Здравствуй,<u>{message.from_user.first_name}</u>! Это бот создан специально для <i>создания/решения тестов</i> онлайн. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
-    await Form.waiting_for_name.set()
+    # TODO: вызов проверки на наличие в бд
+
 # Обработчик команды /how_to_use
 @router.message(Command('how_to_use'))
-async def how_to_use_command(message: Message):
+async def how_to_use_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /how_to_use
     await message.answer('''1. Чтобы посмотреть статистику или изметить профиль, пропишите /my_profile
 2. Если вы хотите создать тест, пропришите /create_test
@@ -41,43 +43,43 @@ async def how_to_use_command(message: Message):
 
 # Обработчик команды /my_profile
 @router.message(Command('my_profile'))
-async def commands_command(message: Message):
+async def commands_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /my_profile
     await message.answer('my_profile', parse_mode="HTML")
 
 # Обработчик команды /create_test
 @router.message(Command('create_test'))
-async def commands_command(message: Message):
+async def commands_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /create_test
     await message.answer('create_test', parse_mode="HTML")
 
 # Обработчик команды /solve_test
 @router.message(Command('solve_test'))
-async def commands_command(message: Message):
+async def commands_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /solve_test
     await message.answer('solve_test', parse_mode="HTML")
 
 # Обработчик команды /my_test
 @router.message(Command('my_test'))
-async def commands_command(message: Message):
+async def commands_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /my_test
     await message.answer('my_test', parse_mode="HTML")
 
 # Обработчик команды /my_result
 @router.message(Command('my_result'))
-async def commands_command(message: Message):
+async def commands_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /my_result
     await message.answer('my_result', parse_mode="HTML")
 
 # Обработчик команды /feedback
 @router.message(Command('feedback'))
-async def commands_command(message: Message):
+async def commands_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /feedback
     await message.answer('feedback', parse_mode="HTML")
 
 
 @router.message(lambda message: message.text, state=Form.waiting_for_fio)
-async def process_name(message: Message, state: FSMContext):
+async def process_name(message: Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         if message.text[0] == '/':
             await message.answer('Укажи <u>ФИО</u>, а не команду.', parse_mode="HTML")
@@ -88,7 +90,7 @@ async def process_name(message: Message, state: FSMContext):
             await state.set_state(Form.waiting_for_status)  # Устанавливаем состояние ожидания статуса
 
 @router.message(lambda message: message.text, state=Form.waiting_for_status)
-async def process_name(message: Message, state: FSMContext):
+async def process_name(message: Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         if message.text == 'Проподователь':
             data['status'] = 't'
@@ -106,7 +108,7 @@ async def process_name(message: Message, state: FSMContext):
             await state.set_state(Form.waiting_for_status) # Устанавливаем состояние ожидания статуса
 
 @router.message(lambda message: message.text, state=Form.waiting_for_group)
-async def process_name(message: Message, state: FSMContext):
+async def process_name(message: Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         if message.text[0] == '/':
             await message.answer('Укажи <u>группу/класс</u>, а не команду.', parse_mode="HTML")

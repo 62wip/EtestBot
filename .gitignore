@@ -1,4 +1,5 @@
 
 .EtestBot/config.py
 config.py
-.venv
+.EtestBot/.venv/
+.venv/

@@ -1,3 +1,5 @@
+from functools import partial
+
 import asyncio
 from aiogram import Bot, Dispatcher
 import pymysql
@@ -19,13 +21,13 @@ async def on_shutdown(dp: Dispatcher) -> None:
 
 # Определяем асинхронную функцию main
 async def main() -> None:
-    await bot.delete_webhook(drop_pending_updates=True) 
     # Создаем экземпляр бота с использованием API_TOKEN из настроек
     bot = Bot(token=API_TOKEN)
+    await bot.delete_webhook(drop_pending_updates=True) 
     # Создаем диспетчер (Dispatcher)
     dp = Dispatcher()
-    dp.startup.register(on_startup)
-    dp.shutdown.register(on_shutdown)
+    dp.startup.register(partial(on_startup, dp))
+    dp.shutdown.register(partial(on_shutdown, dp))
     # Включаем маршрутизатор (router), который будет обрабатывать входящие сообщения
     dp.include_router(router)
     # Запускаем бота в режиме long polling
@@ -36,4 +38,4 @@ if __name__ == '__main__':
         # Запускаем асинхронную функцию main с использованием asyncio.run()
         asyncio.run(main())
     except KeyboardInterrupt or RuntimeError:
-        print('Выход')
+        print('Exit successful.')

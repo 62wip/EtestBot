@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Filter, Command
 
 import app.keyboards as kb
-from app.state import Form
+# from app.state import Form
 from app.database.requests import *
 from app.database.models import *
 
@@ -13,12 +13,10 @@ from app.database.models import *
 router = Router()
 
 async def check_first_use(message, state: FSMContext) -> None:
-    from run import dp
-    db = dp["db"]
-    if checking_first_use(db, message.from_user.id):
+    if checking_first_use(message.from_user.id):
         await message.answer('Вижу ты тут <u>новенький</u>, позволь узнать твои данные, которые <b>будут отображаться у других пользователей</b>!', parse_mode="HTML")
         await message.answer('Укажи свое <i>ФИО</i>.', parse_mode="HTML")
-        await state.set_state(Form.waiting_for_fio) # Устанавливаем состояние ожидания ФИО
+        # await state.set_state(Form.waiting_for_fio) # Устанавливаем состояние ожидания ФИО
         
 
 
@@ -78,44 +76,44 @@ async def commands_command(message: Message) -> None:
     await message.answer('feedback', parse_mode="HTML")
 
 
-@router.message(lambda message: message.text, state=Form.waiting_for_fio)
-async def process_name(message: Message, state: FSMContext) -> None:
-    async with state.proxy() as data:
-        if message.text[0] == '/':
-            await message.answer('Укажи <u>ФИО</u>, а не команду.', parse_mode="HTML")
-            await state.set_state(Form.waiting_for_fio) # Устанавливаем состояние ожидания ФИО
-        else:
-            data['fio'] = message.text
-            await message.answer(f'Отлично, <u>{data["fio"]}</u>! Теперь укажи <i>кто ты</i>.', parse_mode="HTML", reply_markup=kb.set_status)
-            await state.set_state(Form.waiting_for_status)  # Устанавливаем состояние ожидания статуса
+# @router.message(lambda message: message.text, state=Form.waiting_for_fio)
+# async def process_name(message: Message, state: FSMContext) -> None:
+#     async with state.proxy() as data:
+#         if message.text[0] == '/':
+#             await message.answer('Укажи <u>ФИО</u>, а не команду.', parse_mode="HTML")
+#             await state.set_state(Form.waiting_for_fio) # Устанавливаем состояние ожидания ФИО
+#         else:
+#             data['fio'] = message.text
+#             await message.answer(f'Отлично, <u>{data["fio"]}</u>! Теперь укажи <i>кто ты</i>.', parse_mode="HTML", reply_markup=kb.set_status)
+#             await state.set_state(Form.waiting_for_status)  # Устанавливаем состояние ожидания статуса
 
-@router.message(lambda message: message.text, state=Form.waiting_for_status)
-async def process_name(message: Message, state: FSMContext) -> None:
-    async with state.proxy() as data:
-        if message.text == 'Проподователь':
-            data['status'] = 't'
-            data['group'] = None
-            await message.answer(f'Отлично, <u>{data["fio"]}</u>! Регестрация завершена.', parse_mode="HTML")
-            user = User(message.from_user.id, message.from_user.username, data['fio'], data['status'], data['group'], '', '')
-            await state.finish()
-            print(user)
-        elif message.text == 'Ученик':
-            data['status'] = 's'
-            await message.answer(f'Отлично, <u>{data["fio"]}</u>! Осталось установить <i>группу или класс</i>.', parse_mode="HTML", reply_markup=kb.set_status)
-            await state.set_state(Form.waiting_for_group) # Устанавливаем состояние ожидания группы
-        else:
-            await message.answer(f'Укажите ваш <u>статус</u>', parse_mode="HTML", reply_markup=kb.set_status)
-            await state.set_state(Form.waiting_for_status) # Устанавливаем состояние ожидания статуса
+# @router.message(lambda message: message.text, state=Form.waiting_for_status)
+# async def process_name(message: Message, state: FSMContext) -> None:
+#     async with state.proxy() as data:
+#         if message.text == 'Проподователь':
+#             data['status'] = 't'
+#             data['group'] = None
+#             await message.answer(f'Отлично, <u>{data["fio"]}</u>! Регестрация завершена.', parse_mode="HTML")
+#             user = User(message.from_user.id, message.from_user.username, data['fio'], data['status'], data['group'], '', '')
+#             await state.finish()
+#             print(user)
+#         elif message.text == 'Ученик':
+#             data['status'] = 's'
+#             await message.answer(f'Отлично, <u>{data["fio"]}</u>! Осталось установить <i>группу или класс</i>.', parse_mode="HTML", reply_markup=kb.set_status)
+#             await state.set_state(Form.waiting_for_group) # Устанавливаем состояние ожидания группы
+#         else:
+#             await message.answer(f'Укажите ваш <u>статус</u>', parse_mode="HTML", reply_markup=kb.set_status)
+#             await state.set_state(Form.waiting_for_status) # Устанавливаем состояние ожидания статуса
 
-@router.message(lambda message: message.text, state=Form.waiting_for_group)
-async def process_name(message: Message, state: FSMContext) -> None:
-    async with state.proxy() as data:
-        if message.text[0] == '/':
-            await message.answer('Укажи <u>группу/класс</u>, а не команду.', parse_mode="HTML")
-            await state.set_state(Form.waiting_for_group) # Устанавливаем состояние ожидания группы
-        else:
-            data['group'] = message.text
-            await message.answer(f'Отлично, <u>{data["fio"]}</u>! Регестрация завершена.', parse_mode="HTML")
-            user = User(message.from_user.id, message.from_user.username, data['fio'], data['status'], data['group'], '', '')
-            print(user)
-            await state.finish()
+# @router.message(lambda message: message.text, state=Form.waiting_for_group)
+# async def process_name(message: Message, state: FSMContext) -> None:
+#     async with state.proxy() as data:
+#         if message.text[0] == '/':
+#             await message.answer('Укажи <u>группу/класс</u>, а не команду.', parse_mode="HTML")
+#             await state.set_state(Form.waiting_for_group) # Устанавливаем состояние ожидания группы
+#         else:
+#             data['group'] = message.text
+#             await message.answer(f'Отлично, <u>{data["fio"]}</u>! Регестрация завершена.', parse_mode="HTML")
+#             user = User(message.from_user.id, message.from_user.username, data['fio'], data['status'], data['group'], '', '')
+#             print(user)
+#             await state.finish()

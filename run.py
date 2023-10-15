@@ -6,29 +6,19 @@ import pymysql
 from config import *
 import app.keyboards as kb
 from app.handlers import router
+from app.database.requests import db, create_all_tables
 
-def on_startup(dp):
-    try:
-        db = pymysql.connect(
-            host=HOST,
-            port=3306,
-            user=USER,
-            password=PASSWORD,
-            database=DB_NAME,
-            cursorclass=pymysql.cursors.DictCursor
-        )
-        db = dp["db"]
+async def on_startup(dp: Dispatcher) -> None:
+    print("Bot is starting up...")
+    create_all_tables()
 
-    except:
-        Exception('Database have not connection.')
-
-def on_shutdown(dp):
-    db = dp["db"]
+async def on_shutdown(dp: Dispatcher) -> None:
+    print("Bot is shutting down...")
     db.close()
     
 
 # Определяем асинхронную функцию main
-async def main():
+async def main() -> None:
     # Создаем экземпляр бота с использованием API_TOKEN из настроек
     bot = Bot(token=API_TOKEN)
     # Создаем диспетчер (Dispatcher)

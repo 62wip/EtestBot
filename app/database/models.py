@@ -1,10 +1,3 @@
-from aiogram.fsm.state import State, StatesGroup
-
-class Form(StatesGroup):
-    waiting_for_fio = State()
-    waiting_for_status = State()
-    waiting_for_group = State()    
-
 class User():
     def __init__(self, id, user_id, username, fio, status, group, all_created_test, all_done_test):
         self.id = id

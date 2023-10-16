@@ -6,14 +6,15 @@ from aiogram.filters import Filter, Command
 
 import app.keyboards as kb
 # from app.state import Form
-from app.database.requests import *
+from app.database.requests import Connection
 from app.database.models import *
 
 
 router = Router()
+connection = Connection()
 
 async def check_first_use(message, state: FSMContext) -> None:
-    if checking_first_use(message.from_user.id):
+    if connection.checking_first_use(message.from_user.id):
         await message.answer('Вижу ты тут <u>новенький</u>, позволь узнать твои данные, которые <b>будут отображаться у других пользователей</b>!', parse_mode="HTML")
         await message.answer('Укажи свое <i>ФИО</i>.', parse_mode="HTML")
         # await state.set_state(Form.waiting_for_fio) # Устанавливаем состояние ожидания ФИО
@@ -23,7 +24,8 @@ async def check_first_use(message, state: FSMContext) -> None:
 
 # Обработчик команды /start
 @router.message(Command('start'))
-async def start_command(message: Message) -> None:
+async def start_command(message: Message, connection : Connection) -> None:
+    await connection.insert_or_update_user_id(message.from_user.id)
     # Отправляем сообщение в ответ на команду /start
     await message.answer(f'Здравствуй,<u>{message.from_user.first_name}</u>! Это бот создан специально для <i>создания/решения тестов</i> онлайн. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
     # TODO: вызов проверки на наличие в бд

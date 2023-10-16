@@ -8,15 +8,15 @@ import pymysql
 from config import *
 import app.keyboards as kb
 from app.handlers import router
-from app.database.requests import db, create_all_tables
+from app.database.requests import Connection
 
-async def on_startup(dp: Dispatcher) -> None:
+async def on_startup(dp: Dispatcher, connection: Connection) -> None:
     print("Bot is starting up...")
-    create_all_tables()
+    connection.create_all_tables()
 
-async def on_shutdown(dp: Dispatcher) -> None:
+async def on_shutdown(dp: Dispatcher, connection: Connection) -> None:
     print("Bot is shutting down...")
-    db.close()
+    connection.db.close()
     
 
 # Определяем асинхронную функцию main
@@ -26,10 +26,11 @@ async def main() -> None:
     await bot.delete_webhook(drop_pending_updates=True) 
     # Создаем диспетчер (Dispatcher)
     dp = Dispatcher()
-    dp.startup.register(partial(on_startup, dp))
-    dp.shutdown.register(partial(on_shutdown, dp))
+    connection = Connection()
     # Включаем маршрутизатор (router), который будет обрабатывать входящие сообщения
     dp.include_router(router)
+    dp.startup.register(partial(on_startup, dp, connection))
+    dp.shutdown.register(partial(on_shutdown, dp, connection))
     # Запускаем бота в режиме long polling
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 

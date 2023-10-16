@@ -3,3 +3,4 @@
 config.py
 .EtestBot/.venv/
 .venv/
+*.pyc

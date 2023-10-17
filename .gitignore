@@ -3,3 +3,10 @@
 config.py
 .EtestBot/.venv/
 .venv/
+*.pyc
+.EtestBot/__pycache__
+__pycache__
+.EtestBot/app/__pycache__
+app/__pycache__
+.EtestBot/app/database/__pycache__
+app/database/__pycache__

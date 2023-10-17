@@ -1,3 +1,5 @@
+from functools import partial
+
 import asyncio
 from aiogram import Bot, Dispatcher
 import pymysql
@@ -6,41 +8,35 @@ import pymysql
 from config import *
 import app.keyboards as kb
 from app.handlers import router
+from app.database.requests import Connection
 
-def on_startup(dp):
-    try:
-        db = pymysql.connect(
-            host=HOST,
-            port=3306,
-            user=USER,
-            password=PASSWORD,
-            database=DB_NAME,
-            cursorclass=pymysql.cursors.DictCursor
-        )
-        db = dp["db"]
+async def on_startup(dp: Dispatcher, connection: Connection) -> None:
+    print("Bot is starting up...")
+    connection.create_all_tables()
 
-    except:
-        Exception('Database have not connection.')
-
-def on_shutdown(dp):
-    db = dp["db"]
-    db.close()
+async def on_shutdown(dp: Dispatcher, connection: Connection) -> None:
+    print("Bot is shutting down...")
+    connection.db.close()
     
 
 # Определяем асинхронную функцию main
-async def main():
+async def main() -> None:
     # Создаем экземпляр бота с использованием API_TOKEN из настроек
     bot = Bot(token=API_TOKEN)
+    await bot.delete_webhook(drop_pending_updates=True) 
     # Создаем диспетчер (Dispatcher)
     dp = Dispatcher()
+    connection = Connection()
     # Включаем маршрутизатор (router), который будет обрабатывать входящие сообщения
     dp.include_router(router)
+    dp.startup.register(partial(on_startup, dp, connection))
+    dp.shutdown.register(partial(on_shutdown, dp, connection))
     # Запускаем бота в режиме long polling
-    await dp.start_polling(bot, on_startup=on_startup, on_shutdown=on_shutdown)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == '__main__':
     try:
         # Запускаем асинхронную функцию main с использованием asyncio.run()
         asyncio.run(main())
     except KeyboardInterrupt or RuntimeError:
-        print('Выход')
+        print('Exit successful.')

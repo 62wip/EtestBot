@@ -1,7 +1,7 @@
 from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, KeyboardButton, InlineKeyboardButton
 
 set_status_kb = [
-    [KeyboardButton(text='Проподователь'),
+    [KeyboardButton(text='Преподователь'),
      KeyboardButton(text='Ученик')]
 ]
 

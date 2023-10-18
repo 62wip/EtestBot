@@ -11,10 +11,10 @@ from app.database.models import *
 
 
 router = Router()
-connction = Connection()
+connection = Connection()
 
 async def check_first_use(message, state: FSMContext) -> None:
-    if connction.checking_first_use(message.from_user.id):
+    if connection.checking_first_use(message.from_user.id):
         await message.answer('Вижу ты тут <u>новенький</u>, позволь узнать твои данные, которые <b>будут отображаться у других пользователей</b>!', parse_mode="HTML")
         await message.answer('Укажи свое <i>ФИО</i>.', parse_mode="HTML")
         await state.set_state(Form.waiting_for_fio) # Устанавливаем состояние ожидания ФИО
@@ -26,8 +26,7 @@ async def check_first_use(message, state: FSMContext) -> None:
 @router.message(Command('start'))
 async def start_command(message: Message, state: FSMContext) -> None:
     # Отправляем сообщение в ответ на команду /start
-    await message.answer(f'Здравствуй,<u>{message.from_user.first_name}</u>! Это бот создан специально для <i>создания/решения тестов</i> онлайн. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
-    # TODO: вызов проверки на наличие в бд
+    await message.answer(f'Здравствуй,<u>{message.from_user.first_name}</u>! Это бот создан специально для <i>создания/решения тестов</i> онлайн.', parse_mode="HTML")
     await check_first_use(message, state)
 
 # Обработчик команды /how_to_use
@@ -95,7 +94,7 @@ async def status_state(message: Message, state: FSMContext) -> None:
         await state.update_data(status='T')
         await state.update_data(group=None)
         context_data = await state.get_data()
-        await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена.', parse_mode="HTML")
+        await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
         user = User(message.from_user.id, message.from_user.username, context_data.get('fio'), context_data.get('status'),context_data.get('group'))
         print(user)
     elif message.text == 'Ученик':
@@ -115,6 +114,6 @@ async def group_(message: Message, state: FSMContext) -> None:
     else:
         await state.update_data(group=message.text)
         context_data = await state.get_data()
-        await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена.', parse_mode="HTML")
+        await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
         user = User(message.from_user.id, message.from_user.username, context_data.get('fio'), context_data.get('status'),context_data.get('group'))
-        print(user)
+        connection.insert_new_user_id(user)

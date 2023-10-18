@@ -1,5 +1,5 @@
 from typing import Any
-from aiogram import Router
+from aiogram import Router, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery 
 from aiogram.filters import Filter, Command
@@ -8,6 +8,8 @@ import app.keyboards as kb
 from app.state import Form
 from app.database.requests import Connection
 from app.database.models import *
+
+from config import TG_ID
 
 
 router = Router()
@@ -42,40 +44,40 @@ async def how_to_use_command(message: Message) -> None:
 
 # Обработчик команды /my_profile
 @router.message(Command('my_profile'))
-async def commands_command(message: Message) -> None:
+async def my_profile_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /my_profile
     await message.answer('my_profile', parse_mode="HTML")
 
 # Обработчик команды /create_test
 @router.message(Command('create_test'))
-async def commands_command(message: Message) -> None:
+async def create_test_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /create_test
     await message.answer('create_test', parse_mode="HTML")
 
 # Обработчик команды /solve_test
 @router.message(Command('solve_test'))
-async def commands_command(message: Message) -> None:
+async def solve_test_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /solve_test
     await message.answer('solve_test', parse_mode="HTML")
 
 # Обработчик команды /my_test
 @router.message(Command('my_test'))
-async def commands_command(message: Message) -> None:
+async def my_test_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /my_test
     await message.answer('my_test', parse_mode="HTML")
 
 # Обработчик команды /my_result
 @router.message(Command('my_result'))
-async def commands_command(message: Message) -> None:
+async def my_result_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /my_result
     await message.answer('my_result', parse_mode="HTML")
 
 # Обработчик команды /feedback
 @router.message(Command('feedback'))
-async def commands_command(message: Message) -> None:
+async def feedback_command(message: Message, state: FSMContext) -> None:
     # Отправляем сообщение в ответ на команду /feedback
-    await message.answer('feedback', parse_mode="HTML")
-
+    await message.answer('Напишите сообщение для <i>обратной связи</i>. Чтобы отменить отправку нажмите на кнопку <b>Отмена</b>', parse_mode="HTML", reply_markup=kb.cancel_for_feedback)
+    await state.set_state(Form.waiting_for_feedback)
 
 @router.message(Form.waiting_for_fio)
 async def fio_state(message: Message, state: FSMContext) -> None:
@@ -90,11 +92,12 @@ async def fio_state(message: Message, state: FSMContext) -> None:
 
 @router.message(Form.waiting_for_status)
 async def status_state(message: Message, state: FSMContext) -> None:
-    if message.text == 'Проподователь':
+    if message.text == 'Преподаватель':
         await state.update_data(status='T')
         await state.update_data(group=None)
         context_data = await state.get_data()
         await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
+        state.clear()
         user = User(message.from_user.id, message.from_user.username, context_data.get('fio'), context_data.get('status'),context_data.get('group'))
         print(user)
     elif message.text == 'Ученик':
@@ -107,7 +110,7 @@ async def status_state(message: Message, state: FSMContext) -> None:
         await state.set_state(Form.waiting_for_status) # Устанавливаем состояние ожидания статуса
 
 @router.message(Form.waiting_for_group)
-async def group_(message: Message, state: FSMContext) -> None:    
+async def group_state(message: Message, state: FSMContext) -> None:    
     if message.text[0] == '/':
         await message.answer('Укажи <u>группу/класс</u>, а не команду.', parse_mode="HTML")
         await state.set_state(Form.waiting_for_group) # Устанавливаем состояние ожидания группы
@@ -115,5 +118,15 @@ async def group_(message: Message, state: FSMContext) -> None:
         await state.update_data(group=message.text)
         context_data = await state.get_data()
         await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
+        state.clear()
         user = User(message.from_user.id, message.from_user.username, context_data.get('fio'), context_data.get('status'),context_data.get('group'))
         connection.insert_new_user_id(user)
+
+@router.message(Form.waiting_for_feedback)
+async def feedback_state(message: Message, state: FSMContext, bot: Bot) -> None:
+    if message.text == 'Отмена':
+        await message.answer('<i>Отправка отменена</i>', parse_mode="HTML")
+    else:
+        await message(f'user_id: {message.from_user.id}\nusername: {message.from_user.username}\nfirst_name: {message.from_user.first_name}\nТекст: {message.text}')
+        await bot.send_message(TG_ID, '<i>Ваше сообщение передано</i>', parse_mode="HTML")
+        state.clear()

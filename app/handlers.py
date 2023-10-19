@@ -28,7 +28,7 @@ async def check_first_use(message, state: FSMContext) -> None:
 @router.message(Command('start'))
 async def start_command(message: Message, state: FSMContext) -> None:
     # Отправляем сообщение в ответ на команду /start
-    await message.answer(f'Здравствуй,<u>{message.from_user.first_name}</u>! Это бот создан специально для <i>создания/решения тестов</i> онлайн.', parse_mode="HTML")
+    await message.answer(f'Здравствуй, <u>{message.from_user.first_name}</u>! Это бот создан специально для <i>создания/решения тестов</i> онлайн.', parse_mode="HTML")
     await check_first_use(message, state)
 
 # Обработчик команды /how_to_use
@@ -97,7 +97,7 @@ async def status_state(message: Message, state: FSMContext) -> None:
         await state.update_data(group=None)
         context_data = await state.get_data()
         await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
-        state.clear()
+        await state.clear()
         user = User(message.from_user.id, message.from_user.username, context_data.get('fio'), context_data.get('status'),context_data.get('group'))
         print(user)
     elif message.text == 'Ученик':
@@ -118,7 +118,7 @@ async def group_state(message: Message, state: FSMContext) -> None:
         await state.update_data(group=message.text)
         context_data = await state.get_data()
         await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
-        state.clear()
+        await state.clear()
         user = User(message.from_user.id, message.from_user.username, context_data.get('fio'), context_data.get('status'),context_data.get('group'))
         connection.insert_new_user_id(user)
 
@@ -126,7 +126,8 @@ async def group_state(message: Message, state: FSMContext) -> None:
 async def feedback_state(message: Message, state: FSMContext, bot: Bot) -> None:
     if message.text == 'Отмена':
         await message.answer('<i>Отправка отменена</i>', parse_mode="HTML")
+        await state.clear()
     else:
-        await message(f'user_id: {message.from_user.id}\nusername: {message.from_user.username}\nfirst_name: {message.from_user.first_name}\nТекст: {message.text}')
-        await bot.send_message(TG_ID, '<i>Ваше сообщение передано</i>', parse_mode="HTML")
-        state.clear()
+        await message.answer('<i>Ваше сообщение передано</i>', parse_mode="HTML")
+        await bot.send_message(chat_id=TG_ID, text=f'user_id: {message.from_user.id}\nusername: {message.from_user.username}\nfirst_name: {message.from_user.first_name}\nТекст: {message.text}', parse_mode="HTML")
+        await state.clear()

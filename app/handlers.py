@@ -126,8 +126,7 @@ async def group_state(message: Message, state: FSMContext) -> None:
 async def feedback_state(message: Message, state: FSMContext, bot: Bot) -> None:
     if message.text == 'Отмена':
         await message.answer('<i>Отправка отменена</i>', parse_mode="HTML")
-        await state.clear()
     else:
         await message.answer('<i>Ваше сообщение передано</i>', parse_mode="HTML")
         await bot.send_message(chat_id=TG_ID, text=f'user_id: {message.from_user.id}\nusername: {message.from_user.username}\nfirst_name: {message.from_user.first_name}\nТекст: {message.text}', parse_mode="HTML")
-        await state.clear()
+    await state.clear()

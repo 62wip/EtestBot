@@ -45,8 +45,9 @@ async def how_to_use_command(message: Message) -> None:
 # Обработчик команды /my_profile
 @router.message(Command('my_profile'))
 async def my_profile_command(message: Message) -> None:
+    user_data = connection.select_for_my_profile(message.from_user.id)
     # Отправляем сообщение в ответ на команду /my_profile
-    await message.answer('my_profile', parse_mode="HTML")
+    await message.answer(text=f'{user_data}', parse_mode="HTML")
 
 # Обработчик команды /create_test
 @router.message(Command('create_test'))
@@ -99,7 +100,6 @@ async def status_state(message: Message, state: FSMContext) -> None:
         await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регестрация завершена. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use', parse_mode="HTML")
         await state.clear()
         user = User(message.from_user.id, message.from_user.username, context_data.get('fio'), context_data.get('status'),context_data.get('group'))
-        print(user)
     elif message.text == 'Ученик':
         await state.update_data(status='S')
         context_data = await state.get_data()

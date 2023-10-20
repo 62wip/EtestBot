@@ -33,10 +33,10 @@ class Connection():
             except pymysql.Error as e:
                 print(f"Error creating table: {e}")
 
-    def insert_new_user_id(self, user: User):
+    def insert_new_user_id(self, user: User) -> None:
         with self.db.cursor() as cursor:
             try:
-                execute_insert_new_user_id = f'INSERT INTO `users` (user_id, username, fio, status, `group`) VALUES (%s, %s,%s, %s, %s)'
+                execute_insert_new_user_id = f'INSERT INTO `users` (user_id, username, fio, status, `group`) VALUES ({user.user_id}, {user.username}, {user.fio}, {chr(user.status)}, {user.group})'
                 values = (user.user_id, user.username, user.fio, user.status, user.group)
                 cursor.execute(execute_insert_new_user_id, values)
                 self.db.commit()
@@ -44,7 +44,7 @@ class Connection():
                 print(f"Error in insert into table: {e}")
 
 
-    def checking_first_use(self, user_id) -> None:
+    def checking_first_use(self, user_id: int) -> bool:
         with self.db.cursor() as cursor:
             try:
                 execute_insert_new_user_id = f'SELECT * FROM `users` WHERE user_id = {user_id}'
@@ -53,3 +53,14 @@ class Connection():
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
         return len(result) == 0
+    
+    def select_for_my_profile(self, user_id: int) -> User:
+        with self.db.cursor() as cursor:
+            try:
+                execute_select_for_my_profile = f'SELECT * FROM `users` WHERE user_id = {user_id}'
+                cursor.execute(execute_select_for_my_profile)
+                result = cursor.fetchall()[0]
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")
+
+        return User(result['user_id'], result['username'], result['fio'], result['status'], result['group'])

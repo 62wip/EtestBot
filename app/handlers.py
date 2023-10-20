@@ -46,8 +46,14 @@ async def how_to_use_command(message: Message) -> None:
 @router.message(Command('my_profile'))
 async def my_profile_command(message: Message) -> None:
     user_data = connection.select_for_my_profile(message.from_user.id)
+    text = f'''<u><b>Ваш профиль</b></u>:
+<i>ФИО(отображаемое имя)</i>: {user_data.fio}\n'''
+    if user_data.status == 't':
+        text += '<i>Статус</i>: Преподователь'
+    else:
+        text += f'<i>Статус</i>: Ученик\n<i>Группа/класс</i>: {user_data.group}'
     # Отправляем сообщение в ответ на команду /my_profile
-    await message.answer(text=f'{user_data}', parse_mode="HTML")
+    await message.answer(text, parse_mode="HTML")
 
 # Обработчик команды /create_test
 @router.message(Command('create_test'))

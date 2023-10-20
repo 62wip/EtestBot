@@ -54,15 +54,13 @@ class Connection():
                 print(f"Error in select from table: {e}")
         return len(result) == 0
     
-    def select_for_my_profile(self, user_id: int):
+    def select_for_my_profile(self, user_id: int) -> User:
         with self.db.cursor() as cursor:
             try:
                 execute_select_for_my_profile = f'SELECT * FROM `users` WHERE user_id = {user_id}'
                 cursor.execute(execute_select_for_my_profile)
-                result = cursor.fetchall()
+                result = cursor.fetchall()[0]
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
 
-        # return User(result[0], result[1], result[2], )
-        print(result)
-        return result
+        return User(result['user_id'], result['username'], result['fio'], result['status'], result['group'])

@@ -1,5 +1,5 @@
 from typing import Any
-from aiogram import Router, Bot
+from aiogram import Router, Bot, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery 
 from aiogram.filters import Filter, Command
@@ -19,7 +19,7 @@ async def check_first_use(message, state: FSMContext) -> None:
     if connection.checking_first_use(message.from_user.id):
         await message.answer('Вижу ты тут <u>новенький</u>, позволь узнать твои данные, которые <b>будут отображаться у других пользователей</b>!', parse_mode="HTML")
         await message.answer('Укажи свое <i>ФИО</i>.', parse_mode="HTML")
-        await state.set_state(Form.waiting_for_fio) # Устанавливаем состояние ожидания ФИО
+        await state.set_state(Form. waiting_for_set_fio) # Устанавливаем состояние ожидания ФИО
         
 
 
@@ -44,16 +44,21 @@ async def how_to_use_command(message: Message) -> None:
 
 # Обработчик команды /my_profile
 @router.message(Command('my_profile'))
-async def my_profile_command(message: Message) -> None:
+async def my_profile_command(message: Message, state: FSMContext) -> None:
     user_data = connection.select_for_my_profile(message.from_user.id)
     text = f'''<u><b>Ваш профиль</b></u>:
-<i>ФИО(отображаемое имя)</i>: {user_data.fio}\n'''
+<i>ФИО(отображаемое имя)</i>: {user_data.fio}
+<i>Телеграм ID:</i> {user_data.user_id}\n'''
     if user_data.status == 't':
         text += '<i>Статус</i>: Преподователь'
+        markup = kb.edit_my_profile_for_teacher
+        await state.set_state(Form.waiting_for_update_for_teacher)
     else:
         text += f'<i>Статус</i>: Ученик\n<i>Группа/класс</i>: {user_data.group}'
+        markup = kb.edit_my_profile_for_student
+        await state.set_state(Form.waiting_for_update_for_student)
     # Отправляем сообщение в ответ на команду /my_profile
-    await message.answer(text, parse_mode="HTML")
+    await message.answer(text, parse_mode="HTML", reply_markup=markup)
 
 # Обработчик команды /create_test
 @router.message(Command('create_test'))
@@ -86,18 +91,18 @@ async def feedback_command(message: Message, state: FSMContext) -> None:
     await message.answer('Напишите сообщение для <i>обратной связи</i>. Чтобы отменить отправку нажмите на кнопку <b>Отмена</b>', parse_mode="HTML", reply_markup=kb.cancel_for_feedback)
     await state.set_state(Form.waiting_for_feedback)
 
-@router.message(Form.waiting_for_fio)
+@router.message(Form. waiting_for_set_fio)
 async def fio_state(message: Message, state: FSMContext) -> None:
     if message.text[0] == '/':
         await message.answer('Укажи <u>ФИО</u>, а не команду.', parse_mode="HTML")
-        await state.set_state(Form.waiting_for_fio) # Устанавливаем состояние ожидания ФИО
+        await state.set_state(Form. waiting_for_set_fio) # Устанавливаем состояние ожидания ФИО
     else:
         await state.update_data(fio=message.text)
         context_data = await state.get_data()
         await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Теперь укажи <i>кто ты</i>.', parse_mode="HTML", reply_markup=kb.set_status)
-        await state.set_state(Form.waiting_for_status)  # Устанавливаем состояние ожидания статуса
+        await state.set_state(Form.waiting_for_set_status)  # Устанавливаем состояние ожидания статуса
 
-@router.message(Form.waiting_for_status)
+@router.message(Form.waiting_for_set_status)
 async def status_state(message: Message, state: FSMContext) -> None:
     if message.text == 'Преподаватель':
         await state.update_data(status='T')
@@ -110,16 +115,16 @@ async def status_state(message: Message, state: FSMContext) -> None:
         await state.update_data(status='S')
         context_data = await state.get_data()
         await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Осталось установить <i>группу или класс</i>.', parse_mode="HTML", reply_markup=kb.set_status)
-        await state.set_state(Form.waiting_for_group) # Устанавливаем состояние ожидания группы
+        await state.set_state(Form.waiting_for_set_group) # Устанавливаем состояние ожидания группы
     else:
         await message.answer(f'Укажите ваш <u>статус</u>', parse_mode="HTML", reply_markup=kb.set_status)
-        await state.set_state(Form.waiting_for_status) # Устанавливаем состояние ожидания статуса
+        await state.set_state(Form.waiting_for_set_status) # Устанавливаем состояние ожидания статуса
 
-@router.message(Form.waiting_for_group)
+@router.message(Form.waiting_for_set_group)
 async def group_state(message: Message, state: FSMContext) -> None:    
     if message.text[0] == '/':
         await message.answer('Укажи <u>группу/класс</u>, а не команду.', parse_mode="HTML")
-        await state.set_state(Form.waiting_for_group) # Устанавливаем состояние ожидания группы
+        await state.set_state(Form.waiting_for_set_group) # Устанавливаем состояние ожидания группы
     else:
         await state.update_data(group=message.text)
         context_data = await state.get_data()
@@ -136,3 +141,51 @@ async def feedback_state(message: Message, state: FSMContext, bot: Bot) -> None:
         await message.answer('<i>Ваше сообщение передано</i>', parse_mode="HTML")
         await bot.send_message(chat_id=TG_ID, text=f'user_id: {message.from_user.id}\nusername: {message.from_user.username}\nfirst_name: {message.from_user.first_name}\nТекст: {message.text}', parse_mode="HTML")
     await state.clear()
+
+@router.message(Form.waiting_for_update_for_teacher, F.text.in_(kb.text_for_edit_my_profile_for_teacher))
+async def update_for_teacher_state(message: Message, state: FSMContext) -> None:
+    if message.text == 'ФИО':
+        await message.answer('Укажи свое новое <i>ФИО</i>.', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_update_fio)
+    elif message.text == 'Статус':
+        await message.answer(f'Укажи свой новый статус', parse_mode="HTML", reply_markup=kb.set_status)
+        await state.set_state(Form.waiting_for_update_status)
+
+@router.message(Form.waiting_for_update_for_student, F.text.in_(kb.text_for_edit_my_profile_for_student))
+async def update_for_student_state(message: Message, state: FSMContext) -> None:
+    if message.text == 'ФИО':
+        await message.answer('Укажи свое новое <i>ФИО</i>.', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_update_fio)
+    elif message.text == 'Статус':
+        await message.answer(f'Укажи свой новый статус', parse_mode="HTML", reply_markup=kb.set_status)
+        await state.set_state(Form.waiting_for_update_status)
+    elif message.text == 'Группа':
+        await message.answer(f'Укажи свою новую группу', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_update_group)
+
+@router.message(Form.waiting_for_update_fio)
+async def update_fio_state(message: Message, state: FSMContext) -> None:
+    if message.text[0] == '/':
+        await message.answer('Укажи <u>ФИО</u>, а не команду.', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_update_fio)
+    else:
+        await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
+        await my_profile_command(message, state)
+
+@router.message(Form.waiting_for_update_status, F.in_(kb.text_for_set_status))
+async def update_fio_state(message: Message, state: FSMContext) -> None:
+    if message.text == 'Преподаватель':
+        await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
+        await my_profile_command(message, state)
+    elif message.text == 'Ученик':
+        message.answer('Отличино, теперь укажите вашу группу/класс', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_update_group)
+
+@router.message(Form.waiting_for_update_group)
+async def update_fio_state(message: Message, state: FSMContext) -> None:
+    if message.text[0] == '/':
+        await message.answer('Укажи <u>группу/класс</u>, а не команду.', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_update_fio)
+    else:
+        await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
+        await my_profile_command(message, state)

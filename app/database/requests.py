@@ -64,3 +64,30 @@ class Connection():
                 print(f"Error in select from table: {e}")
 
         return User(result['user_id'], result['username'], result['fio'], result['status'], result['group'])
+    
+    def update_fio_for_my_profile(self, user_id: int, fio: str) -> None:
+        with self.db.cursor() as cursor:
+            try:
+                execute_update_fio_for_my_profile = f'UPDATE `users` SET fio = "{fio}" WHERE user_id = {user_id}'
+                cursor.execute(execute_update_fio_for_my_profile)
+                self.db.commit()
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")
+
+    def update_status_for_my_profile(self, user_id: int, status: str) -> None:
+        with self.db.cursor() as cursor:
+            try:
+                execute_update_status_for_my_profile = f'UPDATE `users` SET status = "{status}", `group` = NULL WHERE user_id = {user_id}'
+                cursor.execute(execute_update_status_for_my_profile)
+                self.db.commit()
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")
+
+    def update_group_for_my_profile(self, user_id: int, group: str) -> None:
+        with self.db.cursor() as cursor:
+            try:
+                execute_update_group_for_my_profile = f'UPDATE `users` SET `group` = "{group}" WHERE user_id = {user_id}'
+                cursor.execute(execute_update_group_for_my_profile)
+                self.db.commit()
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")

@@ -49,11 +49,11 @@ async def my_profile_command(message: Message, state: FSMContext) -> None:
     text = f'''<u><b>Ваш профиль</b></u>:
 <i>ФИО(отображаемое имя)</i>: {user_data.fio}
 <i>Телеграм ID:</i> {user_data.user_id}\n'''
-    if user_data.status == 't':
+    if user_data.status == 'T':
         text += '<i>Статус</i>: Преподователь'
         markup = kb.edit_my_profile_for_teacher
         await state.set_state(Form.waiting_for_update_for_teacher)
-    else:
+    elif user_data.status == 'S':
         text += f'<i>Статус</i>: Ученик\n<i>Группа/класс</i>: {user_data.group}'
         markup = kb.edit_my_profile_for_student
         await state.set_state(Form.waiting_for_update_for_student)
@@ -154,7 +154,7 @@ async def update_for_teacher_state(message: Message, state: FSMContext) -> None:
 @router.message(Form.waiting_for_update_for_student, F.text.in_(kb.text_for_edit_my_profile_for_student))
 async def update_for_student_state(message: Message, state: FSMContext) -> None:
     if message.text == 'ФИО':
-        await message.answer('Укажи свое новое <i>ФИО</i>.', parse_mode="HTML")
+        await message.answer('Укажи свое новое <i>ФИО</i>', parse_mode="HTML")
         await state.set_state(Form.waiting_for_update_fio)
     elif message.text == 'Статус':
         await message.answer(f'Укажи свой новый статус', parse_mode="HTML", reply_markup=kb.set_status)
@@ -169,23 +169,30 @@ async def update_fio_state(message: Message, state: FSMContext) -> None:
         await message.answer('Укажи <u>ФИО</u>, а не команду.', parse_mode="HTML")
         await state.set_state(Form.waiting_for_update_fio)
     else:
+        connection.update_fio_for_my_profile(message.from_user.id, message.text)
         await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
         await my_profile_command(message, state)
+        await state.clear()
 
-@router.message(Form.waiting_for_update_status, F.in_(kb.text_for_set_status))
-async def update_fio_state(message: Message, state: FSMContext) -> None:
+@router.message(Form.waiting_for_update_status, F.text.in_(kb.text_for_set_status))
+async def update_status_state(message: Message, state: FSMContext) -> None:
     if message.text == 'Преподаватель':
+        connection.update_status_for_my_profile(message.from_user.id, 'T')
         await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
         await my_profile_command(message, state)
+        await state.clear()
     elif message.text == 'Ученик':
-        message.answer('Отличино, теперь укажите вашу группу/класс', parse_mode="HTML")
+        connection.update_status_for_my_profile(message.from_user.id, 'S')
+        await message.answer('Отличино, теперь укажите вашу группу/класс', parse_mode="HTML")
         await state.set_state(Form.waiting_for_update_group)
 
 @router.message(Form.waiting_for_update_group)
-async def update_fio_state(message: Message, state: FSMContext) -> None:
+async def update_group_state(message: Message, state: FSMContext) -> None:
     if message.text[0] == '/':
         await message.answer('Укажи <u>группу/класс</u>, а не команду.', parse_mode="HTML")
         await state.set_state(Form.waiting_for_update_fio)
     else:
+        connection.update_group_for_my_profile(message.from_user.id, message.text)
         await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
         await my_profile_command(message, state)
+        await state.clear()

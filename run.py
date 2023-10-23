@@ -18,7 +18,6 @@ async def on_shutdown(dp: Dispatcher, connection: Connection) -> None:
     print("Bot is shutting down...")
     connection.db.close()
     
-
 # Определяем асинхронную функцию main
 async def main() -> None:
     # Создаем экземпляр бота с использованием API_TOKEN из настроек

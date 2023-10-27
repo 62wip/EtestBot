@@ -19,6 +19,11 @@ cancel_for_feedback = ReplyKeyboardMarkup(
     resize_keyboard=True,
     input_field_placeholder='Нажмите для отмены'
 )
+cancel_for_create_test = ReplyKeyboardMarkup(
+    keyboard=cancel_kb,
+    resize_keyboard=True,
+    input_field_placeholder='Нажмите для отмены создание теста'
+)
 
 text_for_edit_my_profile_for_student = ['ФИО', 'Статус', 'Группа']
 edit_my_profile_for_student_kb = [

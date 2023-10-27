@@ -13,3 +13,4 @@ class Form(StatesGroup):
     waiting_for_test_name = State()
     waiting_for_test_subject = State()
     waiting_for_test_question = State()
+    waiting_for_test_answer = State()

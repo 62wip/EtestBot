@@ -71,7 +71,7 @@ async def my_profile_command(message: Message, state: FSMContext) -> None:
 async def create_test_command(message: Message, state: FSMContext) -> None:
     # Отправляем сообщение в ответ на команду /create_test
     await message.answer('Введите название <i>теста</i>', parse_mode="HTML")
-    await state.set_state(Form.waiting_for_test_name())
+    await state.set_state(Form.waiting_for_test_name)
 
 # Обработчик команды /solve_test
 @router.message(Command('solve_test'))
@@ -207,35 +207,87 @@ async def update_group_state(message: Message, state: FSMContext) -> None:
 @router.message(Form.waiting_for_test_name)
 async def set_test_name_state(message: Message, state: FSMContext) -> None:
     if message.text[0] == '/':
-        await message.answer('Введите <u>названиие теста</u>, а не команду.', parse_mode="HTML")
+        await message.answer('Введите <u>названиие теста</u>, а не команду.', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_name)
     else:
         await state.update_data(test_name=message.text)
-        await message.answer('Отличино, теперь укажите дисциплину теста', parse_mode="HTML")
+        await message.answer('Отличино, теперь укажите дисциплину теста <i>(если ее нет, укажите "-")</i>', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_subject)
 
 @router.message(Form.waiting_for_test_subject)
 async def set_test_subject_state(message: Message, state: FSMContext) -> None:
     if message.text[0] == '/':
-        await message.answer('Укажите <u>дисциплину теста</u>, а не команду.', parse_mode="HTML")
+        await message.answer('Укажите <u>дисциплину теста или "-"</u>, а не команду.', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_name)
     else:
-        await state.update_data(test_subject=message.text, questions=[])
-        await message.answer('Отличино, теперь отправте 1-й вопрос', parse_mode="HTML")
+        if message.text == '-':
+            await state.update_data(test_subject=None)
+        else:
+            await state.update_data(test_subject=message.text)
+        await state.update_data(questions=[''], answers=[''], right_answers=[''])
+        await message.answer('Отличино, теперь отправте 1-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_question)
 
-@router.message(Form.waiting_for_test_subject)
+@router.message(Form.waiting_for_test_question)
 async def set_test_question_state(message: Message, state: FSMContext) -> None:
     if message.text[0] == '/':
-        await message.answer('Отправте <u>вопрос для теста/u>, а не команду.', parse_mode="HTML")
+        await message.answer('Отправте <u>вопрос для теста/u>, а не команду.', parse_mode="HTML", reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_question_name)
     elif message.text == 'Отмена':
         await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
+        await state.clear()
     elif message.text == 'Предпросмотр':
         await message.answer('TODO', parse_mode="HTML")
     else:
         context_data = await state.get_data()
-        await state.update_data(test_subject=message.text, questions=context_data.get("questions").append(message.text))
-        await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML", reply_markup=kb.set_question_for_test_kb)
+        if context_data.get('questions')[0] == '':
+            await state.update_data(questions=[message.text])
+        else:
+            await state.update_data(questions=context_data.get('questions').append(message.text))
+        await message.answer('''Отличино, теперь отправте варианты ответа в формате:
+1. Вариант
+!2. Вариант
+3. Вариант
+4. Вариант
+(вослицательный знак означает правильный вариант ответа)''', parse_mode="HTML", reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_question)
-        print(context_data.get('questions'))
+
+@router.message(Form.waiting_for_test_answer)
+async def set_test_answer_state(message: Message, state: FSMContext) -> None:
+    if message.text[0] == '/':
+        await message.answer('Отправте <u>ответы на вопросы для теста/u>, а не команду.', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
+        await state.set_state(Form.waiting_for_test_answer)
+    elif message.text == 'Отмена':
+        await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
+    else:
+        var = message.text.split('\n')
+        answers = []
+        right_answer = 0
+        for i in range(len(var)):
+            if var[i][0] == '!':
+                if right_answer != 0:
+                    right_answer == 0
+                else: 
+                    right_answer = i + 1
+            if '. ' in var[i]:
+                answers.append(var[i].split('. ', maxsplit=1)[1])
+        if right_answer == 0 or len(var) != len(answers):
+            await message.answer('''<u>Пожалуйста</u>, отправте варианты ответа в формате:
+1. Вариант
+!2. Вариант
+3. Вариант
+4. Вариант
+(вослицательный знак означает правильный вариант ответа)''', parse_mode="HTML")
+            await state.set_state(Form.waiting_for_test_answer)
+        else:
+            context_data = await state.get_data()
+            if context_data.get('answers')[0] == '':
+                await state.update_data(answers=[answers])
+            else:
+                await state.update_data(answers=context_data.get('answers').append(answers))
+            if context_data.get('right_answers')[0] == '':
+                await state.update_data(answers=[right_answer])
+            else:
+                await state.update_data(answers=context_data.get('right_answers').append(right_answer))
+        await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
+        print(context_data.get('questions'), context_data.get('right_answers'), context_data.get('right_answers'))

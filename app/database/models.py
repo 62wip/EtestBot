@@ -9,7 +9,7 @@ class User():
         self.group = group
 
 class Test():
-    def __init__(self, creator_user_id: int, creation_time, test_key: int, test_name: str, subject_name: str, all_questions: list, all_answers: list, right_answer: list, visible_result: bool) -> None:
+    def __init__(self, creator_user_id: int, creation_time, test_key: int, test_name: str, subject_name: str or None,  all_questions: list, all_answers: list, right_answer: list, visible_result: bool) -> None:
         self.creator_user_id = creator_user_id
         self.creation_time = creation_time
         self.test_key = test_key

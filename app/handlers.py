@@ -250,7 +250,7 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
 3. Вариант
 4. Вариант
 (вослицательный знак означает правильный вариант ответа)''', parse_mode="HTML", reply_markup=kb.cancel_for_create_test)
-        await state.set_state(Form.waiting_for_test_question)
+        await state.set_state(Form.waiting_for_test_answer)
 
 @router.message(Form.waiting_for_test_answer)
 async def set_test_answer_state(message: Message, state: FSMContext) -> None:
@@ -271,7 +271,7 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
                     right_answer = i + 1
             if '. ' in var[i]:
                 answers.append(var[i].split('. ', maxsplit=1)[1])
-        if right_answer == 0 or len(var) != len(answers):
+        if right_answer == 0 or len(var) != len(answers) or len(answers) > 1:
             await message.answer('''<u>Пожалуйста</u>, отправте варианты ответа в формате:
 1. Вариант
 !2. Вариант

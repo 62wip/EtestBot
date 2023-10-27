@@ -10,3 +10,6 @@ class Form(StatesGroup):
     waiting_for_update_fio = State()
     waiting_for_update_status = State()
     waiting_for_update_group = State()
+    waiting_for_test_name = State()
+    waiting_for_test_subject = State()
+    waiting_for_test_question = State()

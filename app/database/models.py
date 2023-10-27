@@ -8,8 +8,9 @@ class User():
         self.status = status
         self.group = group
 
+
 class Test():
-    def __init__(self, creator_user_id: int, creation_time: datetime, test_key: int,test_name: str, subject_name: str, all_questions: list(str), all_answers: list(list(str)), right_answer: list(int), visible_result: bool) -> None:
+    def __init__(self, creator_user_id: int, creation_time, test_key: str, test_name: str, subject_name: str, all_questions, all_answers, right_answer, visible_result: bool) -> None:
         self.creator_user_id = creator_user_id
         self.creation_time = creation_time
         self.test_key = test_key

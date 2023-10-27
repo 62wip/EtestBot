@@ -25,7 +25,7 @@ class Connection():
             try:
                 execute_create_all_tables = [
                     'CREATE TABLE IF NOT EXISTS `users` (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT, username TEXT, fio TEXT, status CHAR(1), `group` TEXT)',
-                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, test_key INT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answer TEXT, visible_result BIT)'
+                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, test_key TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answer TEXT, visible_result BIT)'
                     # 'CREATE TABLE IF NOT EXISTS `test_result` (id INT AUTO_INCREMENT PRIMARY KEY, maker_user_id INT, making_time DATETIME, test_id INT, count_right INT, mistake_place TEXT)'
 
                     ]

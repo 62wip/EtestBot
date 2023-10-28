@@ -3,7 +3,7 @@
 # random_uuid = uuid.uuid4()
  
 # print(random_uuid)
-
+import re
 
 from typing import Any
 from aiogram import Router, Bot, F
@@ -219,6 +219,9 @@ async def set_test_subject_state(message: Message, state: FSMContext) -> None:
     if message.text[0] == '/':
         await message.answer('Укажите <u>дисциплину теста или "-"</u>, а не команду.', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_name)
+    elif message.text == 'Отмена':
+        await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
+        await state.clear()
     else:
         if message.text == '-':
             await state.update_data(test_subject=None)
@@ -245,10 +248,10 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
         else:
             await state.update_data(questions=context_data.get('questions').append(message.text))
         await message.answer('''Отличино, теперь отправте варианты ответа в формате:
-1. Вариант
-!2. Вариант
-3. Вариант
-4. Вариант
+1) Вариант
+!2) Вариант
+3) Вариант
+4) Вариант
 (вослицательный знак означает правильный вариант ответа)''', parse_mode="HTML", reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_answer)
 
@@ -261,22 +264,23 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
     else:
         var = message.text.split('\n')
+        print(var)
         answers = []
-        right_answer = 0
+        right_answer = []
         for i in range(len(var)):
             if var[i][0] == '!':
-                if right_answer != 0:
-                    right_answer == 0
-                else: 
-                    right_answer = i + 1
-            if '. ' in var[i]:
-                answers.append(var[i].split('. ', maxsplit=1)[1])
-        if right_answer == 0 or len(var) != len(answers) or len(answers) > 1:
+                # var[i][0] = var[i] = var[i].replace('!', '')
+                right_answer.append(i + 1)
+                print(right_answer)
+            if ') ' in var[i]:
+                answers.append(var[i].split(') ', maxsplit=1)[1])
+                print(answers)
+        if len(right_answer) != 1 or len(var) != len(answers) or len(var) < 2 or '' in answers or ' ' in answers:
             await message.answer('''<u>Пожалуйста</u>, отправте варианты ответа в формате:
-1. Вариант
-!2. Вариант
-3. Вариант
-4. Вариант
+1) Вариант
+!2) Вариант
+3) Вариант
+4) Вариант
 (вослицательный знак означает правильный вариант ответа)''', parse_mode="HTML")
             await state.set_state(Form.waiting_for_test_answer)
         else:
@@ -289,5 +293,6 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
                 await state.update_data(answers=[right_answer])
             else:
                 await state.update_data(answers=context_data.get('right_answers').append(right_answer))
-        await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
-        print(context_data.get('questions'), context_data.get('right_answers'), context_data.get('right_answers'))
+            await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
+            await state.set_state(Form.waiting_for_test_question)
+            print(context_data.get('questions'), context_data.get('right_answers'), context_data.get('right_answers'))

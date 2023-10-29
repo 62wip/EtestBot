@@ -243,10 +243,11 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
         await message.answer('TODO', parse_mode="HTML")
     else:
         context_data = await state.get_data()
+        print(context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'))
         if context_data.get('questions')[0] == '':
             await state.update_data(questions=[message.text])
         else:
-            await state.update_data(questions=context_data.get('questions').append(message.text))
+            await state.update_data(questions=[*context_data.get('questions') ,message.text])
         await message.answer('''Отличино, теперь отправте варианты ответа в формате:
 1) Вариант
 !2) Вариант
@@ -264,17 +265,17 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
     else:
         var = message.text.split('\n')
-        print(var)
+        # print(var)
         answers = []
         right_answer = []
         for i in range(len(var)):
             if var[i][0] == '!':
                 # var[i][0] = var[i] = var[i].replace('!', '')
                 right_answer.append(i + 1)
-                print(right_answer)
+                # print(right_answer)
             if ') ' in var[i]:
                 answers.append(var[i].split(') ', maxsplit=1)[1])
-                print(answers)
+                # print(answers)
         if len(right_answer) != 1 or len(var) != len(answers) or len(var) < 2 or '' in answers or ' ' in answers:
             await message.answer('''<u>Пожалуйста</u>, отправте варианты ответа в формате:
 1) Вариант
@@ -285,14 +286,10 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
             await state.set_state(Form.waiting_for_test_answer)
         else:
             context_data = await state.get_data()
-            if context_data.get('answers')[0] == '':
-                await state.update_data(answers=[answers])
+            print(answers)
+            if context_data.get('right_answers')[0] == '' and context_data.get('answers')[0] == '':
+                await state.update_data(answers=[answers], right_answers=[right_answer[0]])
             else:
-                await state.update_data(answers=context_data.get('answers').append(answers))
-            if context_data.get('right_answers')[0] == '':
-                await state.update_data(answers=[right_answer])
-            else:
-                await state.update_data(answers=context_data.get('right_answers').append(right_answer))
+                await state.update_data(answers=[*context_data.get('answers'), answers], right_answers=[*context_data.get('right_answers'), right_answer[0]])
             await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
             await state.set_state(Form.waiting_for_test_question)
-            print(context_data.get('questions'), context_data.get('right_answers'), context_data.get('right_answers'))

@@ -241,7 +241,7 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
         await state.clear()
     elif message.text == 'Предпросмотр':
         context_data = await state.get_data()
-        user_data = connection.select_for_user_class
+        user_data = connection.select_for_user_class(message.from_user.id)
         answer = f'''<b><u>Предпосмотр теста</u></b>:
 
 <b>Тест "{context_data.get('test_name')}"</b>
@@ -250,13 +250,13 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
             answer += f'<i>Предмет</i>: {context_data.get("test_subject")}\n'
         answer += f'''<i>Автор</i>: {user_data.fio}
 
-<i><u>Вопросы:</u>
+<u>Вопросы:</u>
 '''
         for i in range(len(context_data.get('questions'))):
-            answer += f'{i + 1}. {context_data.get("questions")[i]}\n'
+            answer += f'<b>{i + 1}.</b> {context_data.get("questions")[i]}\n'
             for g in range(len(context_data.get('answers')[i])):
-                answer += f' {g + 1}) {context_data.get("answers")[i][g]}'
-                if context_data.get('right_answers')[i][g] == g + 1:
+                answer += f' <i>{g + 1})</i> {context_data.get("answers")[i][g]}'
+                if context_data.get('right_answers')[i] == g + 1:
                     answer += ' ✔️\n'
                 else:
                     answer += '\n'

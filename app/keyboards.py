@@ -57,7 +57,7 @@ set_question_for_test = ReplyKeyboardMarkup(
     resize_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )
-
+text_for_choice_for_test_preview_kb = ['Отмена', 'Удалить вопрос', 'Добавить вопрос', 'Опубликовать тест']
 choice_for_test_preview_kb = [
     [KeyboardButton(text='Отмена'),
      KeyboardButton(text='Удалить вопрос'),

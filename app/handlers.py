@@ -51,7 +51,7 @@ async def how_to_use_command(message: Message) -> None:
 # Обработчик команды /my_profile
 @router.message(Command('my_profile'))
 async def my_profile_command(message: Message, state: FSMContext) -> None:
-    user_data = connection.select_for_my_profile(message.from_user.id)
+    user_data = connection.select_for_user_class(message.from_user.id)
     text = f'''<u><b>Ваш профиль</b></u>:
 <i>ФИО(отображаемое имя)</i>: {user_data.fio}
 <i>Телеграм ID:</i> {user_data.user_id}\n'''
@@ -240,10 +240,30 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
         await state.clear()
     elif message.text == 'Предпросмотр':
-        await message.answer('TODO', parse_mode="HTML")
+        context_data = await state.get_data()
+        user_data = connection.select_for_user_class
+        answer = f'''<b><u>Предпосмотр теста</u></b>:
+
+<b>Тест "{context_data.get('test_name')}"</b>
+'''
+        if context_data.get('test_subject') != None:
+            answer += f'<i>Предмет</i>: {context_data.get("test_subject")}\n'
+        answer += f'''<i>Автор</i>: {user_data.fio}
+
+<i><u>Вопросы:</u>
+'''
+        for i in range(len(context_data.get('questions'))):
+            answer += f'{i + 1}. {context_data.get("questions")[i]}\n'
+            for g in range(len(context_data.get('answers')[i])):
+                answer += f' {g + 1}) {context_data.get("answers")[i][g]}'
+                if context_data.get('right_answers')[i][g] == g + 1:
+                    answer += ' ✔️\n'
+                else:
+                    answer += '\n'
+        await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
     else:
         context_data = await state.get_data()
-        print(context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'))
+        # print(context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'))
         if context_data.get('questions')[0] == '':
             await state.update_data(questions=[message.text])
         else:
@@ -265,17 +285,13 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
     else:
         var = message.text.split('\n')
-        # print(var)
         answers = []
         right_answer = []
         for i in range(len(var)):
             if var[i][0] == '!':
-                # var[i][0] = var[i] = var[i].replace('!', '')
                 right_answer.append(i + 1)
-                # print(right_answer)
             if ') ' in var[i]:
                 answers.append(var[i].split(') ', maxsplit=1)[1])
-                # print(answers)
         if len(right_answer) != 1 or len(var) != len(answers) or len(var) < 2 or '' in answers or ' ' in answers:
             await message.answer('''<u>Пожалуйста</u>, отправте варианты ответа в формате:
 1) Вариант
@@ -286,10 +302,9 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
             await state.set_state(Form.waiting_for_test_answer)
         else:
             context_data = await state.get_data()
-            print(answers)
             if context_data.get('right_answers')[0] == '' and context_data.get('answers')[0] == '':
                 await state.update_data(answers=[answers], right_answers=[right_answer[0]])
             else:
                 await state.update_data(answers=[*context_data.get('answers'), answers], right_answers=[*context_data.get('right_answers'), right_answer[0]])
-            await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
+            await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
             await state.set_state(Form.waiting_for_test_question)

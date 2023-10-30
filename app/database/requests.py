@@ -56,7 +56,7 @@ class Connection():
                 print(f"Error in select from table: {e}")
         return len(result) == 0
     
-    def select_for_my_profile(self, user_id: int) -> User:
+    def select_for_user_class(self, user_id: int) -> User:
         with self.db.cursor() as cursor:
             try:
                 execute_select_for_my_profile = f'SELECT * FROM `users` WHERE user_id = {user_id}'

@@ -48,21 +48,24 @@ edit_my_profile_for_teacher = ReplyKeyboardMarkup(
     input_field_placeholder='Что вы хотите изменить'
 )
 
-# set_first_question_for_test_kb = [
-#     [KeyboardButton(text='Отмена')]
-# ]
-# set_first_question_for_test = ReplyKeyboardMarkup(
-#     keyboard=set_first_question_for_test_kb,
-#     resize_keyboard=True,
-#     input_field_placeholder='Выберете пункт'
-# )
-
 set_question_for_test_kb = [
     [KeyboardButton(text='Отмена'),
      KeyboardButton(text='Предпросмотр')]
 ]
 set_question_for_test = ReplyKeyboardMarkup(
     keyboard=set_question_for_test_kb,
+    resize_keyboard=True,
+    input_field_placeholder='Выберете пункт'
+)
+
+choice_for_test_preview_kb = [
+    [KeyboardButton(text='Отмена'),
+     KeyboardButton(text='Удалить вопрос'),
+     KeyboardButton(text='Добавить вопрос'),
+     KeyboardButton(text='Опубликовать тест')]
+]
+choice_for_test_preview = ReplyKeyboardMarkup(
+    keyboard=choice_for_test_preview_kb,
     resize_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )

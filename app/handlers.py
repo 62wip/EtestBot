@@ -26,6 +26,7 @@ async def check_first_use(message, state: FSMContext) -> None:
         await message.answer('Вижу ты тут <u>новенький</u>, позволь узнать твои данные, которые <b>будут отображаться у других пользователей</b>!', parse_mode="HTML")
         await message.answer('Укажите свое <i>ФИО</i>.', parse_mode="HTML")
         await state.set_state(Form. waiting_for_set_fio) # Устанавливаем состояние ожидания ФИО
+
 async def message_for_preview(user_id: int, state: FSMContext) -> str:
     context_data = await state.get_data()
     user_data = connection.select_for_user_class(user_id)
@@ -47,6 +48,7 @@ async def message_for_preview(user_id: int, state: FSMContext) -> str:
                 answer += ' ✔️\n'
             else:
                 answer += '\n'
+    return answer
 
 # Обработчик команды /start
 @router.message(Command('start'))
@@ -323,7 +325,8 @@ async def set_chocie_after_priview(message: Message, state: FSMContext) -> None:
         await state.set_state(Form.waiting_for_test_question)
     elif message.text == 'Опубликовать тест':
         # TODO
-    
+        await message.answer(f'TODO', parse_mode="HTML")
+
 @router.message(Form.waiting_for_del_question)
 async def set_test_answer_state(message: Message, state: FSMContext) -> None:
     if message.text == 'Отмена':
@@ -336,11 +339,15 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
     else:
         try:
             context_data = await state.get_data()
-            state.update_data(questions=context_data.get('questions').pop((message.text) - 1), answers=context_data.get('answers').pop((message.text) - 1), right_answers=context_data.get('right_answers').pop((message.text) - 1))
+            await state.update_data(questions=context_data.get('questions').pop(int(message.text) - 1), answers=context_data.get('answers').pop(int(message.text) - 1), right_answers=context_data.get('right_answers').pop(int(message.text) - 1))
             await message.answer(f'Вопрос №{message.text} <i>удален</i> из теста', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
-            answer = await message_for_preview(message.from_user.id, state)
-            await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
-            await state.set_state(Form.waiting_for_test_preview)
-        except:
+            if len(context_data.get('questions')) == 0:
+                await message.answer('Отличино, теперь отправте 1-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
+                await state.set_state(Form.waiting_for_test_question)
+            else:
+                answer = await message_for_preview(message.from_user.id, state)
+                await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
+                await state.set_state(Form.waiting_for_test_preview)
+        except (TypeError, IndexError):
             await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>)', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
             await state.set_state(Form.waiting_for_del_question)

@@ -26,9 +26,27 @@ async def check_first_use(message, state: FSMContext) -> None:
         await message.answer('Вижу ты тут <u>новенький</u>, позволь узнать твои данные, которые <b>будут отображаться у других пользователей</b>!', parse_mode="HTML")
         await message.answer('Укажите свое <i>ФИО</i>.', parse_mode="HTML")
         await state.set_state(Form. waiting_for_set_fio) # Устанавливаем состояние ожидания ФИО
-        
+async def message_for_preview(user_id: int, state: FSMContext) -> str:
+    context_data = await state.get_data()
+    user_data = connection.select_for_user_class(user_id)
+    answer = f'''<b><u>Предпосмотр теста</u></b>:
 
+<b>Тест "{context_data.get('test_name')}"</b>
+'''
+    if context_data.get('test_subject') != None:
+        answer += f'<i>Предмет</i>: {context_data.get("test_subject")}\n'
+    answer += f'''<i>Автор</i>: {user_data.fio}
 
+<u>Вопросы:</u>
+'''
+    for i in range(len(context_data.get('questions'))):
+        answer += f'<b>{i + 1}.</b> {context_data.get("questions")[i]}\n'
+        for g in range(len(context_data.get('answers')[i])):
+            answer += f' <i>{g + 1})</i> {context_data.get("answers")[i][g]}'
+            if context_data.get('right_answers')[i] == g + 1:
+                answer += ' ✔️\n'
+            else:
+                answer += '\n'
 
 # Обработчик команды /start
 @router.message(Command('start'))
@@ -240,27 +258,9 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
         await state.clear()
     elif message.text == 'Предпросмотр':
-        context_data = await state.get_data()
-        user_data = connection.select_for_user_class(message.from_user.id)
-        answer = f'''<b><u>Предпосмотр теста</u></b>:
-
-<b>Тест "{context_data.get('test_name')}"</b>
-'''
-        if context_data.get('test_subject') != None:
-            answer += f'<i>Предмет</i>: {context_data.get("test_subject")}\n'
-        answer += f'''<i>Автор</i>: {user_data.fio}
-
-<u>Вопросы:</u>
-'''
-        for i in range(len(context_data.get('questions'))):
-            answer += f'<b>{i + 1}.</b> {context_data.get("questions")[i]}\n'
-            for g in range(len(context_data.get('answers')[i])):
-                answer += f' <i>{g + 1})</i> {context_data.get("answers")[i][g]}'
-                if context_data.get('right_answers')[i] == g + 1:
-                    answer += ' ✔️\n'
-                else:
-                    answer += '\n'
+        answer = await message_for_preview(message.from_user.id, state)
         await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
+        await state.set_state(Form.waiting_for_test_preview)
     else:
         context_data = await state.get_data()
         # print(context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'))
@@ -308,3 +308,39 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
                 await state.update_data(answers=[*context_data.get('answers'), answers], right_answers=[*context_data.get('right_answers'), right_answer[0]])
             await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
             await state.set_state(Form.waiting_for_test_question)
+
+@router.message(Form.waiting_for_test_preview, F.text.in_(kb.text_for_choice_for_test_preview))
+async def set_chocie_after_priview(message: Message, state: FSMContext) -> None:
+    if message.text == 'Отмена':
+        await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
+        await state.clear()
+    elif message.text == 'Удалить вопрос':
+        await message.answer(f'Укажите <i>номер</i> вопроса, который вы <u>хотите удалить</u>', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
+        await state.set_state(Form.waiting_for_del_question)
+    elif message.text == 'Добавить вопрос':
+        context_data = await state.get_data()
+        await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
+        await state.set_state(Form.waiting_for_test_question)
+    elif message.text == 'Опубликовать тест':
+        # TODO
+    
+@router.message(Form.waiting_for_del_question)
+async def set_test_answer_state(message: Message, state: FSMContext) -> None:
+    if message.text == 'Отмена':
+        await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
+        await state.clear()
+    elif message.text == 'Предпросмотр':
+        answer = await message_for_preview(message.from_user.id, state)
+        await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
+        await state.set_state(Form.waiting_for_test_preview)
+    else:
+        try:
+            context_data = await state.get_data()
+            state.update_data(questions=context_data.get('questions').pop((message.text) - 1), answers=context_data.get('answers').pop((message.text) - 1), right_answers=context_data.get('right_answers').pop((message.text) - 1))
+            await message.answer(f'Вопрос №{message.text} <i>удален</i> из теста', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
+            answer = await message_for_preview(message.from_user.id, state)
+            await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
+            await state.set_state(Form.waiting_for_test_preview)
+        except:
+            await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>)', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
+            await state.set_state(Form.waiting_for_del_question)

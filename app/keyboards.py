@@ -59,13 +59,25 @@ set_question_for_test = ReplyKeyboardMarkup(
 )
 text_for_choice_for_test_preview = ['Отмена', 'Удалить вопрос', 'Добавить вопрос', 'Опубликовать тест']
 choice_for_test_preview_kb = [
-    [KeyboardButton(text='Отмена'),
+    [KeyboardButton(text='Опубликовать тест'),
      KeyboardButton(text='Удалить вопрос'),
      KeyboardButton(text='Добавить вопрос'),
-     KeyboardButton(text='Опубликовать тест')]
+     KeyboardButton(text='Отмена')]
 ]
 choice_for_test_preview = ReplyKeyboardMarkup(
     keyboard=choice_for_test_preview_kb,
+    resize_keyboard=True,
+    input_field_placeholder='Выберете пункт'
+)
+
+text_for_choosing_visible_result = ['Отмена', 'Удалить вопрос', 'Добавить вопрос', 'Опубликовать тест']
+choosing_visible_result_kb = [
+    [KeyboardButton(text='Да'),
+     KeyboardButton(text='Нет'),
+     KeyboardButton(text='Отмена')]
+]
+choosing_visible_result = ReplyKeyboardMarkup(
+    keyboard=choosing_visible_result_kb,
     resize_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )

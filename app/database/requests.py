@@ -38,7 +38,9 @@ class Connection():
     def insert_new_user_id(self, user: User) -> None:
         with self.db.cursor() as cursor:
             try:
-                execute_insert_new_user_id = f'INSERT INTO `users` (user_id, username, fio, status, `group`) VALUES ({user.user_id}, {user.username}, {user.fio}, {chr(user.status)}, {user.group})'
+                execute_insert_new_user_id = f'''INSERT INTO `users` (user_id, username, fio, status, `group`) 
+                VALUES 
+                ({user.user_id}, {user.username}, {user.fio}, {chr(user.status)}, {user.group})'''
                 values = (user.user_id, user.username, user.fio, user.status, user.group)
                 cursor.execute(execute_insert_new_user_id, values)
                 self.db.commit()
@@ -90,6 +92,19 @@ class Connection():
             try:
                 execute_update_group_for_my_profile = f'UPDATE `users` SET `group` = "{group}" WHERE user_id = {user_id}'
                 cursor.execute(execute_update_group_for_my_profile)
+                self.db.commit()
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")
+
+    def insert_new_test(self, test: Test) -> None:
+        with self.db.cursor() as cursor:
+            try:
+                if test.subject_name != None:
+                    test.subject_name = f'"{test.subject_name}"'
+                execute_insert_new_test = f'''INSERT INTO `test` (creator_user_id, creation_time, test_key, test_name, subject_name, all_questions, all_answers, right_answer, visible_result)) 
+                VALUES 
+                ({test.creator_user_id}, {test.creation_time}, "{test.test_key}", "{test.test_name}", {test.subject_name}, "{"-_-".join(test.all_questions)}, {"-_-".join(["-=-".join(sublist) for sublist in test.all_answers])}", "{"-_-".join(test.right_answer)}", {test.visible_result})'''
+                cursor.execute(execute_insert_new_test)
                 self.db.commit()
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")

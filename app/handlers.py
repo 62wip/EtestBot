@@ -1,9 +1,6 @@
-# import uuid
-# Создание случайного UUID
-# random_uuid = uuid.uuid4()
- 
-# print(random_uuid)
+from uuid import uuid4
 import re
+from datetime import datetime
 
 from typing import Any
 from aiogram import Router, Bot, F
@@ -324,9 +321,8 @@ async def set_chocie_after_priview(message: Message, state: FSMContext) -> None:
         await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_question)
     elif message.text == 'Опубликовать тест':
-        # TODO
-        await message.answer(f'TODO', parse_mode="HTML")
-
+        await message.answer('Осталось совсем <i<>чуть-чуть</i>, выберете, будут ли видны пользователям их результаты после прохождения теста', parse_mode="HTML", reply_markup=kb.choosing_visible_result)
+        
 @router.message(Form.waiting_for_del_question)
 async def set_test_answer_state(message: Message, state: FSMContext) -> None:
     if message.text == 'Отмена':
@@ -351,3 +347,19 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
         except (TypeError, IndexError):
             await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>)', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
             await state.set_state(Form.waiting_for_del_question)
+
+@router.message(Form.waiting_for_test_preview, F.text.in_(kb.text_for_choosing_visible_result))
+async def set_choosing_visible_result(message: Message, state: FSMContext) -> None:
+    if message.text == 'Отмена':
+        await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
+        await state.clear()
+    elif message.text == 'Да':
+        visible_result = True
+    elif message.text == 'Нет':
+        visible_result = False
+    context_data = await state.get_data()
+    key = uuid4()
+    test = Test(message.from_user.id, datetime.now(), key, context_data.get('test_name'), context_data.get('subject_name'), context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'), visible_result)
+    await message.answer(f'Тест "{context_data.get("test_name")}"\nЧтобы пройти тест вставте данный ключ после комадны /solve_test (вы не можете пройти свой-же тест):', parse_mode="HTML")
+    await message.answer(key, parse_mode="HTML")
+    await state.clear()

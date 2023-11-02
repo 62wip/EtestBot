@@ -321,7 +321,7 @@ async def set_chocie_after_priview(message: Message, state: FSMContext) -> None:
         await message.answer(f'Отличино, теперь отправте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_question)
     elif message.text == 'Опубликовать тест':
-        await message.answer('Осталось совсем <i<>чуть-чуть</i>, выберете, будут ли видны пользователям их результаты после прохождения теста', parse_mode="HTML", reply_markup=kb.choosing_visible_result)
+        await message.answer('Осталось совсем <i>чуть-чуть</i>, выберете, будут ли видны пользователям их результаты после прохождения теста', parse_mode="HTML", reply_markup=kb.choosing_visible_result)
         
 @router.message(Form.waiting_for_del_question)
 async def set_test_answer_state(message: Message, state: FSMContext) -> None:
@@ -360,6 +360,7 @@ async def set_choosing_visible_result(message: Message, state: FSMContext) -> No
     context_data = await state.get_data()
     key = uuid4()
     test = Test(message.from_user.id, datetime.now(), key, context_data.get('test_name'), context_data.get('subject_name'), context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'), visible_result)
-    await message.answer(f'Тест "{context_data.get("test_name")}"\nЧтобы пройти тест вставте данный ключ после комадны /solve_test (вы не можете пройти свой-же тест):', parse_mode="HTML")
-    await message.answer(key, parse_mode="HTML")
+    connection.insert_new_test(test)
+    await message.answer(f'Тест "{context_data.get("test_name")}" создан\nЧтобы пройти тест вставте данный ключ после комадны /solve_test (вы не можете пройти свой-же тест):', parse_mode="HTML")
+    await message.answer(str(key), parse_mode="HTML")
     await state.clear()

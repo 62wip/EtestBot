@@ -103,7 +103,7 @@ class Connection():
                     test.subject_name = f'"{test.subject_name}"'
                 execute_insert_new_test = f'''INSERT INTO `test` (creator_user_id, creation_time, test_key, test_name, subject_name, all_questions, all_answers, right_answer, visible_result)) 
                 VALUES 
-                ({test.creator_user_id}, {test.creation_time}, "{test.test_key}", "{test.test_name}", {test.subject_name}, "{"-_-".join(test.all_questions)}, {"-_-".join(["-=-".join(sublist) for sublist in test.all_answers])}", "{"-_-".join(test.right_answer)}", {test.visible_result})'''
+                ({test.creator_user_id}, "{test.creation_time}", "{str(test.test_key)}", "{test.test_name}", {test.subject_name}, "{"-_-".join(test.all_questions)}, {"-_-".join(["-=-".join(sublist) for sublist in test.all_answers])}", "{"-_-".join(list(map(str, test .right_answers)))}", {test.visible_result})'''
                 cursor.execute(execute_insert_new_test)
                 self.db.commit()
             except pymysql.Error as e:

@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 class User():
     def __init__(self, user_id: int, username: str, fio: str, status: chr, group: str or None):
@@ -9,7 +10,7 @@ class User():
         self.group = group
 
 class Test():
-    def __init__(self, creator_user_id: int, creation_time, test_key: int, test_name: str, subject_name: str or None,  all_questions: list, all_answers: list, right_answer: list, visible_result: bool) -> None:
+    def __init__(self, creator_user_id: int, creation_time, test_key: UUID, test_name: str, subject_name: str or None,  all_questions: list, all_answers: list, right_answers: list, visible_result: bool) -> None:
         self.creator_user_id = creator_user_id
         self.creation_time = creation_time.strftime('%Y-%m-%d %H:%M:%S')
         self.test_key = test_key
@@ -17,5 +18,5 @@ class Test():
         self.subject_name = subject_name
         self.all_questions = all_questions
         self.all_answers = all_answers
-        self.right_answer = right_answer
+        self.right_answers = right_answers
         self.visible_result = visible_result

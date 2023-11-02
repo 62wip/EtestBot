@@ -70,7 +70,7 @@ choice_for_test_preview = ReplyKeyboardMarkup(
     input_field_placeholder='Выберете пункт'
 )
 
-text_for_choosing_visible_result = ['Отмена', 'Удалить вопрос', 'Добавить вопрос', 'Опубликовать тест']
+text_for_choosing_visible_result = ['Да', 'Нет', 'Отмена']
 choosing_visible_result_kb = [
     [KeyboardButton(text='Да'),
      KeyboardButton(text='Нет'),

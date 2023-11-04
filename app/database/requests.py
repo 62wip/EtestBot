@@ -25,7 +25,7 @@ class Connection():
             try:
                 execute_create_all_tables = [
                     'CREATE TABLE IF NOT EXISTS `users` (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT, username TEXT, fio TEXT, status CHAR(1), `group` TEXT)',
-                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, test_key TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answer TEXT, visible_result BIT)'
+                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, `test_key` TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answers TEXT, visible_result BIT)'
                     # 'CREATE TABLE IF NOT EXISTS `test_result` (id INT AUTO_INCREMENT PRIMARY KEY, maker_user_id INT, making_time DATETIME, test_id INT, count_right INT, mistake_place TEXT)'
                     ]
                 for execute_create_table in execute_create_all_tables:
@@ -41,8 +41,7 @@ class Connection():
                 execute_insert_new_user_id = f'''INSERT INTO `users` (user_id, username, fio, status, `group`) 
                 VALUES 
                 ({user.user_id}, {user.username}, {user.fio}, {chr(user.status)}, {user.group})'''
-                values = (user.user_id, user.username, user.fio, user.status, user.group)
-                cursor.execute(execute_insert_new_user_id, values)
+                cursor.execute(execute_insert_new_user_id)
                 self.db.commit()
             except pymysql.Error as e:
                 print(f"Error in insert into table: {e}")
@@ -76,7 +75,7 @@ class Connection():
                 cursor.execute(execute_update_fio_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
-                print(f"Error in select from table: {e}")
+                print(f"Error in update from table: {e}")
 
     def update_status_for_my_profile(self, user_id: int, status: str) -> None:
         with self.db.cursor() as cursor:
@@ -85,7 +84,7 @@ class Connection():
                 cursor.execute(execute_update_status_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
-                print(f"Error in select from table: {e}")
+                print(f"Error in update from table: {e}")
 
     def update_group_for_my_profile(self, user_id: int, group: str) -> None:
         with self.db.cursor() as cursor:
@@ -94,17 +93,19 @@ class Connection():
                 cursor.execute(execute_update_group_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
-                print(f"Error in select from table: {e}")
+                print(f"Error in update from table: {e}")
 
     def insert_new_test(self, test: Test) -> None:
         with self.db.cursor() as cursor:
             try:
-                if test.subject_name != None:
-                    test.subject_name = f'"{test.subject_name}"'
-                execute_insert_new_test = f'''INSERT INTO `test` (creator_user_id, creation_time, test_key, test_name, subject_name, all_questions, all_answers, right_answer, visible_result)) 
+                if test.subject_name == None:
+                    subject_name = None
+                else:
+                    subject_name = f'"{test.subject_name}"'
+                execute_insert_new_test = f'''INSERT INTO `test` (creator_user_id, creation_time, test_key, test_name, subject_name, all_questions, all_answers, right_answers, visible_result) 
                 VALUES 
-                ({test.creator_user_id}, "{test.creation_time}", "{str(test.test_key)}", "{test.test_name}", {test.subject_name}, "{"-_-".join(test.all_questions)}, {"-_-".join(["-=-".join(sublist) for sublist in test.all_answers])}", "{"-_-".join(list(map(str, test .right_answers)))}", {test.visible_result})'''
+                ({test.creator_user_id}, "{test.creation_time}", "{str(test.test_key)}", "{test.test_name}", {subject_name}, "{"-_-".join(test.all_questions)}", "{"-_-".join(["-=-".join(sublist) for sublist in test.all_answers])}", "{"-_-".join(list(map(str, test .right_answers)))}", {test.visible_result})'''
                 cursor.execute(execute_insert_new_test)
                 self.db.commit()
             except pymysql.Error as e:
-                print(f"Error in select from table: {e}")
+                print(f"Error in insert from table: {e}")

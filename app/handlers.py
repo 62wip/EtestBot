@@ -22,7 +22,18 @@ async def check_first_use(message, state: FSMContext) -> None:
     if connection.checking_first_use(message.from_user.id):
         await message.answer('Вижу ты тут <u>новенький</u>, позволь узнать твои данные, которые <b>будут отображаться у других пользователей</b>!', parse_mode="HTML")
         await message.answer('Укажите свое <i>ФИО</i>.', parse_mode="HTML")
-        await state.set_state(Form. waiting_for_set_fio) # Устанавливаем состояние ожидания ФИО
+        await state.set_state(Form.waiting_for_set_fio) # Устанавливаем состояние ожидания ФИО
+
+async def message_for_profile(user_id: int) -> str:
+    user_data = connection.select_for_user_class(user_id)
+    answer = f'''<u><b>Ваш профиль</b></u>:
+<i>ФИО(отображаемое имя)</i>: {user_data.fio}
+<i>Телеграм ID:</i> {user_data.user_id}\n'''
+    if user_data.status == 'T':
+        answer += '<i>Статус</i>: Преподователь'
+    elif user_data.status == 'S':
+        answer += f'<i>Статус</i>: Ученик\n<i>Группа/класс</i>: {user_data.group}'
+    return answer
 
 async def message_for_preview(user_id: int, state: FSMContext) -> str:
     context_data = await state.get_data()
@@ -69,19 +80,15 @@ async def how_to_use_command(message: Message) -> None:
 @router.message(Command('my_profile'))
 async def my_profile_command(message: Message, state: FSMContext) -> None:
     user_data = connection.select_for_user_class(message.from_user.id)
-    text = f'''<u><b>Ваш профиль</b></u>:
-<i>ФИО(отображаемое имя)</i>: {user_data.fio}
-<i>Телеграм ID:</i> {user_data.user_id}\n'''
     if user_data.status == 'T':
-        text += '<i>Статус</i>: Преподователь'
         markup = kb.edit_my_profile_for_teacher
         await state.set_state(Form.waiting_for_update_for_teacher)
     elif user_data.status == 'S':
-        text += f'<i>Статус</i>: Ученик\n<i>Группа/класс</i>: {user_data.group}'
         markup = kb.edit_my_profile_for_student
         await state.set_state(Form.waiting_for_update_for_student)
+    answer = await message_for_profile(message.from_user.id)
     # Отправляем сообщение в ответ на команду /my_profile
-    await message.answer(text, parse_mode="HTML", reply_markup=markup)
+    await message.answer(answer, parse_mode="HTML", reply_markup=markup)
 
 # Обработчик команды /create_test
 @router.message(Command('create_test'))
@@ -195,7 +202,7 @@ async def update_fio_state(message: Message, state: FSMContext) -> None:
     else:
         connection.update_fio_for_my_profile(message.from_user.id, message.text)
         await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
-        await my_profile_command(message, state)
+        await message.answer(await message_for_profile(user_id=message.from_user.id), parse_mode="HTML")
         await state.clear()
 
 @router.message(Form.waiting_for_update_status, F.text.in_(kb.text_for_set_status))
@@ -203,7 +210,7 @@ async def update_status_state(message: Message, state: FSMContext) -> None:
     if message.text == 'Преподаватель':
         connection.update_status_for_my_profile(message.from_user.id, 'T')
         await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
-        await my_profile_command(message, state)
+        await message.answer(await message_for_profile(user_id=message.from_user.id), parse_mode="HTML")
         await state.clear()
     elif message.text == 'Ученик':
         connection.update_status_for_my_profile(message.from_user.id, 'S')
@@ -218,7 +225,7 @@ async def update_group_state(message: Message, state: FSMContext) -> None:
     else:
         connection.update_group_for_my_profile(message.from_user.id, message.text)
         await message.answer('Отличино, <u>данные сохранены</u>, теперь ваш профиль выглядит так:', parse_mode="HTML")
-        await my_profile_command(message, state)
+        await message.answer(await message_for_profile(user_id=message.from_user.id), parse_mode="HTML")
         await state.clear()
 
 @router.message(Form.waiting_for_test_name)

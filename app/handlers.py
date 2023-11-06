@@ -40,19 +40,19 @@ async def message_for_preview(user_id: int, state: FSMContext) -> str:
     user_data = connection.select_for_user_class(user_id)
     answer = f'''<b><u>Предпосмотр теста</u></b>:
 
-<b>Тест "{context_data.get('test_name')}"</b>
+<b>Тест "{solving_test.test_name}"</b>
 '''
-    if context_data.get('test_subject') != None:
+    if solving_test.test_subject != None:
         answer += f'<i>Предмет</i>: {context_data.get("test_subject")}\n'
     answer += f'''<i>Автор</i>: {user_data.fio}
 
 <u>Вопросы:</u>
 '''
-    for i in range(len(context_data.get('questions'))):
+    for i in range(len(solving_test.questions)):
         answer += f'<b>{i + 1}.</b> {context_data.get("questions")[i]}\n'
-        for g in range(len(context_data.get('answers')[i])):
+        for g in range(len(solving_test.answers[i])):
             answer += f' <i>{g + 1})</i> {context_data.get("answers")[i][g]}'
-            if context_data.get('right_answers')[i] == g + 1:
+            if solving_test.right_answers[i] == g + 1:
                 answer += ' ✔️\n'
             else:
                 answer += '\n'
@@ -99,9 +99,10 @@ async def create_test_command(message: Message, state: FSMContext) -> None:
 
 # Обработчик команды /solve_test
 @router.message(Command('solve_test'))
-async def solve_test_command(message: Message) -> None:
+async def solve_test_command(message: Message, state: FSMContext) -> None:
     # Отправляем сообщение в ответ на команду /solve_test
-    await message.answer('solve_test', parse_mode="HTML")
+    await message.answer('Введите ключ теста', parse_mode="HTML")
+    await state.set_state(Form.waiting_for_test_key)
 
 # Обработчик команды /my_test
 @router.message(Command('my_test'))
@@ -369,3 +370,34 @@ async def set_choosing_visible_result(message: Message, state: FSMContext) -> No
     await message.answer(f'Тест "{context_data.get("test_name")}" создан\nЧтобы пройти тест вставте данный ключ после комадны /solve_test (вы не можете пройти свой-же тест):', parse_mode="HTML")
     await message.answer(str(key), parse_mode="HTML")
     await state.clear()
+
+@router.message(Form.waiting_for_test_key)
+async def start_solving_test(message: Message, state: FSMContext) -> None:
+    try:
+        solving_test = connection.select_for_test_class_by_uuid(UUID(message.text))
+        if len(solving_test) == 0:
+           await message.answer('Введите <i>ключ</i> от существующего теста', parse_mode="HTML")
+           await state.set_state(Form.waiting_for_test_key)
+        elif solving_test.creator_user_id == message.from_user.id:
+           await message.answer('Вы не можете пройти свой же <u>тест</u>', parse_mode="HTML")
+        else:
+            state.update_data(test=solving_test)
+            answer = f'''<u>Тест найден</u>
+
+<b>Тест "{solving_test.test_name}"</b>
+'''
+            if solving_test.test_subject != None:
+                answer += f'<i>Предмет</i>: {solving_test.test_subject}\n'
+            test_author = connection.select_for_user_class(solving_test.creator_user_id)
+            answer += f'''<i>Автор</i>: {test_author.fio}
+
+<u>Вопросы:</u>
+'''
+            for i in range(len(solving_test.questions)):
+                answer += f'<b>{i + 1}.</b> {solving_test.questions[i]}\n'
+                for g in range(len(solving_test.answers[i])):
+                    answer += f' <i>{g + 1})</i> {solving_test.answers[i][g]}' 
+            await message.answer(answer, parse_mode="HTML")
+    except TypeError:
+        await message.answer('Введите <i>ключ</i> от теста', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_test_key)

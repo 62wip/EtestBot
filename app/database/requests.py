@@ -53,7 +53,8 @@ class Connection():
     def checking_first_use(self, user_id: int) -> bool:
         with self.db.cursor() as cursor:
             try:
-                execute_insert_new_user_id = f'SELECT * FROM `users` WHERE user_id = {user_id}'
+                execute_insert_new_user_id = f'''SELECT * FROM `users` 
+                WHERE user_id = {user_id}'''
                 cursor.execute(execute_insert_new_user_id)
                 result = cursor.fetchall()
             except pymysql.Error as e:
@@ -63,7 +64,8 @@ class Connection():
     def select_for_user_class(self, user_id: int) -> User:
         with self.db.cursor() as cursor:
             try:
-                execute_select_for_my_profile = f'SELECT * FROM `users` WHERE user_id = {user_id}'
+                execute_select_for_my_profile = f'''SELECT * FROM `users` 
+                WHERE user_id = {user_id}'''
                 cursor.execute(execute_select_for_my_profile)
                 result = cursor.fetchall()[0]
             except pymysql.Error as e:
@@ -74,7 +76,9 @@ class Connection():
     def update_fio_for_my_profile(self, user_id: int, fio: str) -> None:
         with self.db.cursor() as cursor:
             try:
-                execute_update_fio_for_my_profile = f'UPDATE `users` SET fio = "{fio}" WHERE user_id = {user_id}'
+                execute_update_fio_for_my_profile = f'''UPDATE `users` 
+                SET fio = "{fio}" 
+                WHERE user_id = {user_id}'''
                 cursor.execute(execute_update_fio_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
@@ -83,7 +87,11 @@ class Connection():
     def update_status_for_my_profile(self, user_id: int, status: str) -> None:
         with self.db.cursor() as cursor:
             try:
-                execute_update_status_for_my_profile = f'UPDATE `users` SET status = "{status}", `group` = NULL WHERE user_id = {user_id}'
+                execute_update_status_for_my_profile = f'''UPDATE `users` 
+                SET 
+                status = "{status}", `group` = NULL 
+                WHERE 
+                user_id = {user_id}'''
                 cursor.execute(execute_update_status_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
@@ -92,7 +100,9 @@ class Connection():
     def update_group_for_my_profile(self, user_id: int, group: str) -> None:
         with self.db.cursor() as cursor:
             try:
-                execute_update_group_for_my_profile = f'UPDATE `users` SET `group` = "{group}" WHERE user_id = {user_id}'
+                execute_update_group_for_my_profile = f'''UPDATE `users` 
+                SET `group` = "{group}" 
+                WHERE user_id = {user_id}'''
                 cursor.execute(execute_update_group_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
@@ -112,3 +122,15 @@ class Connection():
                 self.db.commit()
             except pymysql.Error as e:
                 print(f"Error in insert from table: {e}")
+
+    def select_for_test_class_by_uuid(self, key: UUID) -> Test:
+        with self.db.cursor() as cursor:
+            try:
+                execute_insert_new_test = f'''SELECT * FROM `test` 
+                where test_key = "{str(key)}"'''
+                cursor.execute(execute_insert_new_test)
+                result = cursor.fetchall()[0]
+            except pymysql.Error as e:
+                print(f"Error in insert from table: {e}")
+
+        return Test(result['creator_user_id'], result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])

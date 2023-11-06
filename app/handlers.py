@@ -40,19 +40,19 @@ async def message_for_preview(user_id: int, state: FSMContext) -> str:
     user_data = connection.select_for_user_class(user_id)
     answer = f'''<b><u>Предпосмотр теста</u></b>:
 
-<b>Тест "{solving_test.test_name}"</b>
+<b>Тест "{context_data.get('test_name')}"</b>
 '''
-    if solving_test.test_subject != None:
+    if context_data('test_subject') != None:
         answer += f'<i>Предмет</i>: {context_data.get("test_subject")}\n'
     answer += f'''<i>Автор</i>: {user_data.fio}
 
 <u>Вопросы:</u>
 '''
-    for i in range(len(solving_test.questions)):
+    for i in range(len(context_data('questions'))):
         answer += f'<b>{i + 1}.</b> {context_data.get("questions")[i]}\n'
-        for g in range(len(solving_test.answers[i])):
+        for g in range(len(context_data('answers')[i])):
             answer += f' <i>{g + 1})</i> {context_data.get("answers")[i][g]}'
-            if solving_test.right_answers[i] == g + 1:
+            if context_data('right_answers')[i] == g + 1:
                 answer += ' ✔️\n'
             else:
                 answer += '\n'

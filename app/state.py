@@ -18,3 +18,4 @@ class Form(StatesGroup):
     waiting_for_del_question = State()
     waiting_for_choosing_visible_result = State()
     waiting_for_test_key = State()
+    waiting_for_start_test = State()

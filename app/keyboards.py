@@ -81,3 +81,14 @@ choosing_visible_result = ReplyKeyboardMarkup(
     resize_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )
+
+text_for_start_solve_test = ['Начать решать', 'Отмена']
+start_solve_test_kb = [
+    [KeyboardButton(text='Начать решать'),
+     KeyboardButton(text='Отмена')]
+]
+start_solve_test = ReplyKeyboardMarkup(
+    keyboard=start_solve_test_kb,
+    resize_keyboard=True,
+    input_field_placeholder='Выберете пункт'
+)

@@ -130,7 +130,9 @@ class Connection():
                 where test_key = "{str(key)}"'''
                 cursor.execute(execute_insert_new_test)
                 result = cursor.fetchall()[0]
+            except IndexError:
+                return False
             except pymysql.Error as e:
                 print(f"Error in insert from table: {e}")
 
-        return Test(result['creator_user_id'], result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])
+        return Test(result['creator_user_id'], datetime.strftime(result['creation_time'], '%Y-%m-%d %H:%M:%S'), result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])

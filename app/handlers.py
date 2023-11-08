@@ -375,29 +375,35 @@ async def set_choosing_visible_result(message: Message, state: FSMContext) -> No
 async def start_solving_test(message: Message, state: FSMContext) -> None:
     try:
         solving_test = connection.select_for_test_class_by_uuid(UUID(message.text))
-        if len(solving_test) == 0:
-           await message.answer('Введите <i>ключ</i> от существующего теста', parse_mode="HTML")
-           await state.set_state(Form.waiting_for_test_key)
+        if solving_test == False:
+            await message.answer('Пожалуйста, введите <i>ключ</i> от существующего теста', parse_mode="HTML")
+            await state.set_state(Form.waiting_for_test_key)
         elif solving_test.creator_user_id == message.from_user.id:
            await message.answer('Вы не можете пройти свой же <u>тест</u>', parse_mode="HTML")
         else:
-            state.update_data(test=solving_test)
+            await state.update_data(test=solving_test)
             answer = f'''<u>Тест найден</u>
 
 <b>Тест "{solving_test.test_name}"</b>
 '''
-            if solving_test.test_subject != None:
-                answer += f'<i>Предмет</i>: {solving_test.test_subject}\n'
+            if solving_test.subject_name != None:
+                answer += f'<i>Предмет</i>: {solving_test.subject_name}\n'
             test_author = connection.select_for_user_class(solving_test.creator_user_id)
             answer += f'''<i>Автор</i>: {test_author.fio}
 
 <u>Вопросы:</u>
 '''
-            for i in range(len(solving_test.questions)):
-                answer += f'<b>{i + 1}.</b> {solving_test.questions[i]}\n'
-                for g in range(len(solving_test.answers[i])):
-                    answer += f' <i>{g + 1})</i> {solving_test.answers[i][g]}' 
+            for i in range(len(solving_test.all_questions)):
+                answer += f'<b>{i + 1}.</b> {solving_test.all_questions[i]}\n'
+                for g in range(len(solving_test.all_answers[i])):
+                    answer += f' <i>{g + 1})</i> {solving_test.all_answers[i][g]}\n' 
             await message.answer(answer, parse_mode="HTML")
-    except TypeError:
-        await message.answer('Введите <i>ключ</i> от теста', parse_mode="HTML")
-        await state.set_state(Form.waiting_for_test_key)
+            await state.set_state(Form.waiting_for_start_test)
+    except ValueError:
+        await message.answer('Пожалуйста, введите <i>ключ</i> от существующего теста', parse_mode="HTML",)
+        await state.set_state(Form.waiting_for_start_test)
+
+@router.message(Form.waiting_for_start_test, F.text.in_(kb.text_for_start_solve_test))
+async def start_solving_test(message: Message, state: FSMContext) -> None:
+    # TODO
+    await message.answer('In progress')

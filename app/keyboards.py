@@ -92,3 +92,14 @@ start_solve_test = ReplyKeyboardMarkup(
     resize_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )
+
+def markup_for_answers(answers: list) -> ReplyKeyboardMarkup:
+    answers_kb = []
+    for i in range(answers):
+        answers_kb.append(KeyboardButton(text=i))
+    result_answers = ReplyKeyboardMarkup(
+    keyboard=[answers_kb],
+    resize_keyboard=True,
+    input_field_placeholder='Выберете ответ'
+    )
+    return result_answers

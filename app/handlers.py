@@ -381,7 +381,7 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
         elif solving_test.creator_user_id == message.from_user.id:
            await message.answer('Вы не можете пройти свой же <u>тест</u>', parse_mode="HTML")
         else:
-            await state.update_data(test=solving_test)
+            await state.update_data(test=solving_test, now_question=0)
             answer = f'''<u>Тест найден</u>
 
 <b>Тест "{solving_test.test_name}"</b>
@@ -390,6 +390,7 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
                 answer += f'<i>Предмет</i>: {solving_test.subject_name}\n'
             test_author = connection.select_for_user_class(solving_test.creator_user_id)
             answer += f'''<i>Автор</i>: {test_author.fio}
+Время создания: {str(solving_test.creation_time)}
 
 <u>Вопросы:</u>
 '''
@@ -400,10 +401,30 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
             await message.answer(answer, parse_mode="HTML")
             await state.set_state(Form.waiting_for_start_test)
     except ValueError:
-        await message.answer('Пожалуйста, введите <i>ключ</i> от существующего теста', parse_mode="HTML",)
+        await message.answer('Пожалуйста, введите <i>ключ</i> от существующего теста', parse_mode="HTML")
         await state.set_state(Form.waiting_for_start_test)
 
 @router.message(Form.waiting_for_start_test, F.text.in_(kb.text_for_start_solve_test))
 async def start_solving_test(message: Message, state: FSMContext) -> None:
-    # TODO
-    await message.answer('In progress')
+    if message.text == 'Отмена':
+        await message.answer('Вы отказались от <u>создание теста</u>', parse_mode="HTML")
+        await state.clear()
+    else:
+        context_data = await state.get_data()
+        await state.update_data(now_question=1)
+        answer_markup = kb.markup_for_answers(context_data.get('all_answers')[0])
+        await message.answer(f'<i>Вопрос №1</i>\n{context_data.get("all_questions")[0]}', parse_mode="HTML", reply_markup=answer_markup)
+
+
+
+@router.message(Form.waiting_for_solve_question)
+async def solving_question(message: Message, state: FSMContext) -> None:
+    context_data = await state.get_data()
+    if len(context_data.get("all_questions")) > context_data.get('now_question') + 1:
+        await state.update_data(now_question=context_data.get("now_question") + 1)
+        await state.set_state(Form.waiting_for_start_test)
+    else:
+        # TODO
+        pass
+    answer_markup = kb.markup_for_answers(context_data.get('all_answers')[context_data.get('now_question')])
+    await message.answer(f'<i>Вопрос №{context_data.get("now_question") + 1}</i>\n{context_data.get("all_questions")[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)

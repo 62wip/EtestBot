@@ -307,6 +307,7 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
             await state.set_state(Form.waiting_for_test_answer)
         else:
             context_data = await state.get_data()
+            # TODO: TRY TO ONTIMIZE THIS SYSTEM
             if context_data.get('right_answers')[0] == '' and context_data.get('answers')[0] == '':
                 await state.update_data(answers=[answers], right_answers=[right_answer[0]])
             else:
@@ -381,7 +382,7 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
         elif solving_test.creator_user_id == message.from_user.id:
            await message.answer('Вы не можете пройти свой же <u>тест</u>', parse_mode="HTML")
         else:
-            await state.update_data(test=solving_test, now_question=0)
+            await state.update_data(test=solving_test, now_question=0, test_result=[])
             answer = f'''<u>Тест найден</u>
 
 <b>Тест "{solving_test.test_name}"</b>
@@ -420,11 +421,20 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
 @router.message(Form.waiting_for_solve_question)
 async def solving_question(message: Message, state: FSMContext) -> None:
     context_data = await state.get_data()
-    if len(context_data.get("all_questions")) > context_data.get('now_question') + 1:
-        await state.update_data(now_question=context_data.get("now_question") + 1)
-        await state.set_state(Form.waiting_for_start_test)
+    test:Test = context_data.get('test')
+    if len(test.all_questions) > context_data.get('now_question') + 1:
+        if message.text not in test.all_answers[context_data.get('now_question') - 2]:
+            answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question')] - 2)
+            await message.answer(f'Выберете один из <u>предложенных ответов</u>\n<i>Вопрос №{context_data.get("now_question")}</i>\n{test.all_questions[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)
+        else:
+            if message.text == test.all_answers[context_data.get('now_question') - 1][test.right_answers - 1]:
+                await state.update_data(test_result=[*context_data.get('test_result'), [1]])
+            else:
+                await state.update_data(test_result=[*context_data.get('test_result'), [1, test.all_answers.index(message.text)]])
+            answer_markup = kb.markup_for_answers(context_data.get('all_answers')[context_data.get('now_question') - 1])
+            await message.answer(f'<i>Вопрос №{context_data.get("now_question") + 1}</i>\n{context_data.get("all_questions")[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)
+            await state.update_data(now_question=context_data.get("now_question") + 1)
+        await state.set_state(Form.waiting_for_solve_test)
     else:
         # TODO
         pass
-    answer_markup = kb.markup_for_answers(context_data.get('all_answers')[context_data.get('now_question')])
-    await message.answer(f'<i>Вопрос №{context_data.get("now_question") + 1}</i>\n{context_data.get("all_questions")[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)

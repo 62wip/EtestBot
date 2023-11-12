@@ -399,7 +399,7 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
                 answer += f'<b>{i + 1}.</b> {solving_test.all_questions[i]}\n'
                 for g in range(len(solving_test.all_answers[i])):
                     answer += f' <i>{g + 1})</i> {solving_test.all_answers[i][g]}\n' 
-            await message.answer(answer, parse_mode="HTML")
+            await message.answer(answer, parse_mode="HTML",reply_markup=kb.start_solve_test)
             await state.set_state(Form.waiting_for_start_test)
     except ValueError:
         await message.answer('Пожалуйста, введите <i>ключ</i> от существующего теста', parse_mode="HTML")
@@ -408,13 +408,14 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
 @router.message(Form.waiting_for_start_test, F.text.in_(kb.text_for_start_solve_test))
 async def start_solving_test(message: Message, state: FSMContext) -> None:
     if message.text == 'Отмена':
-        await message.answer('Вы отказались от <u>создание теста</u>', parse_mode="HTML")
+        await message.answer('Вы отказались от <u>прохождения теста</u>', parse_mode="HTML")
         await state.clear()
     else:
         context_data = await state.get_data()
+        test:Test = context_data.get('test')
         await state.update_data(now_question=1)
-        answer_markup = kb.markup_for_answers(context_data.get('all_answers')[0])
-        await message.answer(f'<i>Вопрос №1</i>\n{context_data.get("all_questions")[0]}', parse_mode="HTML", reply_markup=answer_markup)
+        answer_markup = kb.markup_for_answers(test.all_answers[0])
+        await message.answer(f'<i>Вопрос №1</i>\n{test.all_questions[0]}', parse_mode="HTML", reply_markup=answer_markup)
 
 
 
@@ -423,6 +424,7 @@ async def solving_question(message: Message, state: FSMContext) -> None:
     context_data = await state.get_data()
     test:Test = context_data.get('test')
     if len(test.all_questions) > context_data.get('now_question') + 1:
+        print(test.all_answers[context_data.get('now_question') - 2])
         if message.text not in test.all_answers[context_data.get('now_question') - 2]:
             answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question')] - 2)
             await message.answer(f'Выберете один из <u>предложенных ответов</u>\n<i>Вопрос №{context_data.get("now_question")}</i>\n{test.all_questions[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)

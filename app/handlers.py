@@ -250,7 +250,7 @@ async def set_test_subject_state(message: Message, state: FSMContext) -> None:
             await state.update_data(test_subject=None)
         else:
             await state.update_data(test_subject=message.text)
-        await state.update_data(questions=[''], answers=[''], right_answers=[''])
+        await state.update_data(questions=[], answers=[], right_answers=[])
         await message.answer('Отлично, теперь отправьте 1-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
         await state.set_state(Form.waiting_for_test_question)
 
@@ -268,11 +268,7 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
         await state.set_state(Form.waiting_for_test_preview)
     else:
         context_data = await state.get_data()
-        # print(context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'))
-        if context_data.get('questions')[0] == '':
-            await state.update_data(questions=[message.text])
-        else:
-            await state.update_data(questions=[*context_data.get('questions') ,message.text])
+        await state.update_data(questions=[*context_data.get('questions'), message.text])
         await message.answer('''Отлично, теперь отправьте варианты ответа в формате:
 1) Вариант
 !2) Вариант
@@ -307,11 +303,7 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
             await state.set_state(Form.waiting_for_test_answer)
         else:
             context_data = await state.get_data()
-            # TODO: TRY TO ONTIMIZE THIS SYSTEM
-            if context_data.get('right_answers')[0] == '' and context_data.get('answers')[0] == '':
-                await state.update_data(answers=[answers], right_answers=[right_answer[0]])
-            else:
-                await state.update_data(answers=[*context_data.get('answers'), answers], right_answers=[*context_data.get('right_answers'), right_answer[0]])
+            await state.update_data(answers=[*context_data.get('answers'), answers], right_answers=[*context_data.get('right_answers'), right_answer[0]])
             await message.answer(f'Отлично, теперь отправьте {len(context_data.get("questions")) + 1}-й вопрос', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
             await state.set_state(Form.waiting_for_test_question)
 

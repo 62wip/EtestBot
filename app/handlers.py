@@ -416,6 +416,7 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
         await state.update_data(now_question=1)
         answer_markup = kb.markup_for_answers(test.all_answers[0])
         await message.answer(f'<i>Вопрос №1</i>\n{test.all_questions[0]}', parse_mode="HTML", reply_markup=answer_markup)
+        await state.set_state(Form.waiting_for_solve_question)
 
 
 
@@ -423,20 +424,24 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
 async def solving_question(message: Message, state: FSMContext) -> None:
     context_data = await state.get_data()
     test:Test = context_data.get('test')
-    if len(test.all_questions) > context_data.get('now_question') + 1:
-        print(test.all_answers[context_data.get('now_question') - 2])
-        if message.text not in test.all_answers[context_data.get('now_question') - 2]:
-            answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question')] - 2)
-            await message.answer(f'Выберете один из <u>предложенных ответов</u>\n<i>Вопрос №{context_data.get("now_question")}</i>\n{test.all_questions[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)
-        else:
-            if message.text == test.all_answers[context_data.get('now_question') - 1][test.right_answers - 1]:
-                await state.update_data(test_result=[*context_data.get('test_result'), [1]])
-            else:
-                await state.update_data(test_result=[*context_data.get('test_result'), [1, test.all_answers.index(message.text)]])
-            answer_markup = kb.markup_for_answers(context_data.get('all_answers')[context_data.get('now_question') - 1])
-            await message.answer(f'<i>Вопрос №{context_data.get("now_question") + 1}</i>\n{context_data.get("all_questions")[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)
-            await state.update_data(now_question=context_data.get("now_question") + 1)
+    # print(message.text, test.all_answers[context_data.get('now_question') - 2])
+    if message.text not in test.all_answers[context_data.get('now_question') - 1]:
+        answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question') - 1])
+        await message.answer(f'Выберете один из <u>предложенных ответов</u>\n<i>Вопрос №{context_data.get("now_question")}</i>\n{test.all_questions[context_data.get("now_question") - 1]}', parse_mode="HTML", reply_markup=answer_markup)
+        await state.set_state(Form.waiting_for_solve_test)
+    elif message.text == test.all_answers[context_data.get('now_question') - 1][test.right_answers[context_data.get('now_question') - 1] - 1]:
+        await state.update_data(test_result=[*context_data.get('test_result'), [1]])
+    else:
+        await state.update_data(test_result=[*context_data.get('test_result'), [0, test.all_answers[context_data.get('now_question') - 1].index(message.text)]])
+    if len(test.all_questions) > context_data.get('now_question'):
+        # print(test.all_answers)
+        # print(test.all_answers[context_data.get('now_question') - 1])
+        answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question')])
+        await message.answer(f'<i>Вопрос №{context_data.get("now_question") + 1}</i>\n{test.all_questions[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)
+        await state.update_data(now_question=context_data.get("now_question") + 1)
         await state.set_state(Form.waiting_for_solve_test)
     else:
         # TODO
-        pass
+        await state.clear()
+    # print(context_data.get('now_question'))
+    # print(context_data.get('test_result'))

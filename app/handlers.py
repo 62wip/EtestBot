@@ -358,7 +358,7 @@ async def set_choosing_visible_result(message: Message, state: FSMContext) -> No
         visible_result = False
     context_data = await state.get_data()
     key = uuid4()
-    test = Test(message.from_user.id, datetime.now(), key, context_data.get('test_name'), context_data.get('subject_name'), context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'), visible_result)
+    test = Test(None, message.from_user.id, datetime.now(), key, context_data.get('test_name'), context_data.get('subject_name'), context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'), visible_result)
     connection.insert_new_test(test)
     await message.answer(f'Тест "{context_data.get("test_name")}" создан\nЧтобы пройти тест вставте данный ключ после комадны /solve_test (вы не можете пройти свой-же тест):', parse_mode="HTML")
     await message.answer(str(key), parse_mode="HTML")

@@ -10,7 +10,8 @@ class User():
         self.group = group
 
 class Test():
-    def __init__(self, creator_user_id: int, creation_time, test_key: UUID, test_name: str, subject_name: str or None,  all_questions: list, all_answers: list, right_answers: list, visible_result: bool) -> None:
+    def __init__(self, test_id: int or None, creator_user_id: int, creation_time, test_key: UUID, test_name: str, subject_name: str or None,  all_questions: list, all_answers: list, right_answers: list, visible_result: bool) -> None:
+        self.test_id = test_id
         self.creator_user_id = creator_user_id
         try:
             self.creation_time = creation_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -23,3 +24,15 @@ class Test():
         self.all_answers = all_answers
         self.right_answers = right_answers
         self.visible_result = visible_result
+
+class TestResult():
+    def __init__(self, solved_test_id: int, who_done_test: int, completion_time, count_correct_answers: int, count_answers_in_total: int, answers_with_mistakes: list) -> None:
+        self.who_done_test = who_done_test
+        try:
+            self.completion_time = completion_time.strftime('%Y-%m-%d %H:%M:%S')
+        except AttributeError:
+            self.completion_time = completion_time
+            self.solved_test_id = solved_test_id
+            self.count_correct_answers = count_correct_answers
+            self.count_answers_in_total = count_answers_in_total
+            self.answers_with_mistakes = answers_with_mistakes

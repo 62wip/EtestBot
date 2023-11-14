@@ -26,7 +26,7 @@ class Connection():
                 execute_create_all_tables = [
                     'CREATE TABLE IF NOT EXISTS `users` (id INT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT, username TEXT, fio TEXT, status CHAR(1), `group` TEXT)',
                     'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, `test_key` TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answers TEXT, visible_result BIT)'
-                    # 'CREATE TABLE IF NOT EXISTS `test_result` (id INT AUTO_INCREMENT PRIMARY KEY, maker_user_id INT, making_time DATETIME, test_id INT, count_right INT, mistake_place TEXT)'
+                    'CREATE TABLE IF NOT EXISTS `test_result` (id INT AUTO_INCREMENT PRIMARY KEY, who_done_test INT, completion_time DATETIME, solved_test_id INT, count_answers_in_total INT, answers_with_mistakes TEXT)'
                     ]
                 for execute_create_table in execute_create_all_tables:
                     cursor.execute(execute_create_table)
@@ -135,4 +135,5 @@ class Connection():
             except pymysql.Error as e:
                 print(f"Error in insert from table: {e}")
 
-        return Test(result['creator_user_id'], datetime.strftime(result['creation_time'], '%Y-%m-%d %H:%M:%S'), result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])
+        return Test(result['id'], result['creator_user_id'], datetime.strftime(result['creation_time'], '%Y-%m-%d %H:%M:%S'), result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])
+    

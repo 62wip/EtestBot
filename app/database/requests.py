@@ -25,7 +25,7 @@ class Connection():
             try:
                 execute_create_all_tables = [
                     'CREATE TABLE IF NOT EXISTS `users` (id INT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT, username TEXT, fio TEXT, status CHAR(1), `group` TEXT)',
-                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, `test_key` TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answers TEXT, visible_result BIT)'
+                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, `test_key` TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answers TEXT, visible_result BIT)',
                     'CREATE TABLE IF NOT EXISTS `test_result` (id INT AUTO_INCREMENT PRIMARY KEY, who_done_test INT, completion_time DATETIME, solved_test_id INT, count_answers_in_total INT, answers_with_mistakes TEXT)'
                     ]
                 for execute_create_table in execute_create_all_tables:
@@ -82,7 +82,7 @@ class Connection():
                 cursor.execute(execute_update_fio_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
-                print(f"Error in update from table: {e}")
+                print(f"Error in update table: {e}")
 
     def update_status_for_my_profile(self, user_id: int, status: str) -> None:
         with self.db.cursor() as cursor:
@@ -95,7 +95,7 @@ class Connection():
                 cursor.execute(execute_update_status_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
-                print(f"Error in update from table: {e}")
+                print(f"Error in update table: {e}")
 
     def update_group_for_my_profile(self, user_id: int, group: str) -> None:
         with self.db.cursor() as cursor:
@@ -106,7 +106,7 @@ class Connection():
                 cursor.execute(execute_update_group_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
-                print(f"Error in update from table: {e}")
+                print(f"Error in update table: {e}")
 
     def insert_new_test(self, test: Test) -> None:
         with self.db.cursor() as cursor:
@@ -121,7 +121,7 @@ class Connection():
                 cursor.execute(execute_insert_new_test)
                 self.db.commit()
             except pymysql.Error as e:
-                print(f"Error in insert from table: {e}")
+                print(f"Error in insert into table: {e}")
 
     def select_for_test_class_by_uuid(self, key: UUID) -> Test:
         with self.db.cursor() as cursor:
@@ -133,7 +133,17 @@ class Connection():
             except IndexError:
                 return False
             except pymysql.Error as e:
-                print(f"Error in insert from table: {e}")
+                print(f"Error in select from table: {e}")
 
         return Test(result['id'], result['creator_user_id'], datetime.strftime(result['creation_time'], '%Y-%m-%d %H:%M:%S'), result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])
     
+    def insert_new_test_result(self, test_result: TestResult) -> None:
+        with self.db.cursor() as cursor:
+            try:
+                execute_insert_new_test_result = f'''INSERT INTO `test_result` (who_done_test, completion_time, solved_test_id, count_answers_in_total, answers_with_mistakes) 
+                VALUES 
+                ({test_result.who_done_test}, "{test_result.completion_time}", {test_result.solved_test_id}, {test_result.count_answers_in_total}, "{'-_-'.join([':'.join(sublist) for sublist in test_result.answers_with_mistakes])}")'''
+                cursor.execute(execute_insert_new_test_result)
+                self.db.commit()
+            except pymysql.Error as e:
+                print(f"Error in insert into table: {e}")

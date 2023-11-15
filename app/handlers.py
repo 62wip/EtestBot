@@ -35,7 +35,7 @@ async def message_for_profile(user_id: int) -> str:
         answer += f'<i>Статус</i>: Ученик\n<i>Группа/класс</i>: {user_data.group}'
     return answer
 
-async def message_for_preview(user_id: int, state: FSMContext) -> str:
+async def message_for_test_preview(user_id: int, state: FSMContext) -> str:
     context_data = await state.get_data()
     user_data = connection.select_for_user_class(user_id)
     answer = f'''<b><u>Предпосмотр теста</u></b>:
@@ -51,11 +51,37 @@ async def message_for_preview(user_id: int, state: FSMContext) -> str:
     for i in range(len(context_data('questions'))):
         answer += f'<b>{i + 1}.</b> {context_data.get("questions")[i]}\n'
         for g in range(len(context_data('answers')[i])):
-            answer += f' <i>{g + 1})</i> {context_data.get("answers")[i][g]}'
             if context_data('right_answers')[i] == g + 1:
-                answer += ' ✔️\n'
+                answer += '✔️'
             else:
-                answer += '\n'
+                answer += ' '
+            answer += f' <i>{g + 1})</i> {context_data.get("answers")[i][g]}\n'
+            
+    return answer
+
+async def message_for_result_review(state: FSMContext) -> str:
+    context_data = await state.get_data()
+    test:Test = context_data.get('test')
+    answer = f'''<b><u>Предпосмотр решения</u></b>:
+
+<b>Тест "{test.test_name}"</b>
+
+<u>Ответы на вопросы:</u>
+'''
+    for i in range(len(test.questions)):
+        answer += f'<b>{i + 1}.</b> {test.questions[i]}\n'
+        for g in range(len(test.answers[i])):
+            if context_data.get('test_result')[i][0] == 1:
+                if test.right_answers[i] == g + 1:
+                    answer += '✔️'
+                else:
+                    answer += ' '
+            else:
+                if context_data.get('test_result')[i][1] == g + 1:
+                    answer += '✔️'
+                else:
+                    answer += ' '
+            answer += f'<i>{g + 1})</i> {test.all_answers[i][g]}\n'
     return answer
 
 # Обработчик команды /start
@@ -263,8 +289,8 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
         await state.clear()
     elif message.text == 'Предпросмотр':
-        answer = await message_for_preview(message.from_user.id, state)
-        await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
+        answer_text = await message_for_test_preview(message.from_user.id, state)
+        await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
         await state.set_state(Form.waiting_for_test_preview)
     else:
         context_data = await state.get_data()
@@ -328,8 +354,8 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u>', parse_mode="HTML")
         await state.clear()
     elif message.text == 'Предпросмотр':
-        answer = await message_for_preview(message.from_user.id, state)
-        await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
+        answer_text = await message_for_test_preview(message.from_user.id, state)
+        await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
         await state.set_state(Form.waiting_for_test_preview)
     else:
         try:
@@ -340,8 +366,8 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
                 await message.answer('Отлично, теперь отправьте 1-й вопрос', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
                 await state.set_state(Form.waiting_for_test_question)
             else:
-                answer = await message_for_preview(message.from_user.id, state)
-                await message.answer(answer, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
+                answer_text = await message_for_test_preview(message.from_user.id, state)
+                await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
                 await state.set_state(Form.waiting_for_test_preview)
         except (TypeError, IndexError):
             await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>)', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
@@ -434,6 +460,9 @@ async def solving_question(message: Message, state: FSMContext) -> None:
         await state.set_state(Form.waiting_for_solve_test)
     else:
         # TODO
+        answer_text = message_for_result_review(state)
+        await message.answer(f'Вы <i>ответили</i> на все вопросы', parse_mode="HTML")
+        await message.answer(answer_text, parse_mode="HTML")
         await state.clear()
     # print(context_data.get('now_question'))
     # print(context_data.get('test_result'))

@@ -20,3 +20,4 @@ class Form(StatesGroup):
     waiting_for_test_key = State()
     waiting_for_start_test = State()
     waiting_for_solve_question = State()
+    waiting_for_result_preview_aftermath = State()

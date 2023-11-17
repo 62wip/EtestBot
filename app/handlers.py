@@ -68,9 +68,9 @@ async def message_for_result_review(state: FSMContext) -> str:
 
 <u>Ответы на вопросы:</u>
 '''
-    for i in range(len(test.questions)):
-        answer += f'<b>{i + 1}.</b> {test.questions[i]}\n'
-        for g in range(len(test.answers[i])):
+    for i in range(len(test.all_questions)):
+        answer += f'<b>{i + 1}.</b> {test.all_questions[i]}\n'
+        for g in range(len(test.all_answers[i])):
             if context_data.get('test_result')[i][0] == 1:
                 if test.right_answers[i] == g + 1:
                     answer += '✔️'
@@ -442,7 +442,6 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
 async def solving_question(message: Message, state: FSMContext) -> None:
     context_data = await state.get_data()
     test:Test = context_data.get('test')
-    # print(message.text, test.all_answers[context_data.get('now_question') - 2])
     if message.text not in test.all_answers[context_data.get('now_question') - 1]:
         answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question') - 1])
         await message.answer(f'Выберете один из <u>предложенных ответов</u>\n<i>Вопрос №{context_data.get("now_question")}</i>\n{test.all_questions[context_data.get("now_question") - 1]}', parse_mode="HTML", reply_markup=answer_markup)
@@ -452,17 +451,25 @@ async def solving_question(message: Message, state: FSMContext) -> None:
     else:
         await state.update_data(test_result=[*context_data.get('test_result'), [0, test.all_answers[context_data.get('now_question') - 1].index(message.text)]])
     if len(test.all_questions) > context_data.get('now_question'):
-        # print(test.all_answers)
-        # print(test.all_answers[context_data.get('now_question') - 1])
         answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question')])
         await message.answer(f'<i>Вопрос №{context_data.get("now_question") + 1}</i>\n{test.all_questions[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)
         await state.update_data(now_question=context_data.get("now_question") + 1)
         await state.set_state(Form.waiting_for_solve_test)
     else:
         # TODO
-        answer_text = message_for_result_review(state)
+        answer_text = await message_for_result_review(state)
         await message.answer(f'Вы <i>ответили</i> на все вопросы', parse_mode="HTML")
-        await message.answer(answer_text, parse_mode="HTML")
+        await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_result_preview)
+        await state.set_state(Form.waiting_for_result_preview_aftermath)
+
+@router.message(Form.waiting_for_result_preview_aftermath, F.text.in_(kb.text_for_choice_for_result_preview))
+async def result_preview_aftermath(message: Message, state: FSMContext) -> None:
+    if message.text == 'Отмена':
+        await message.answer('Вы отказались от <u>прохождения теста</u>', parse_mode="HTML")
         await state.clear()
-    # print(context_data.get('now_question'))
-    # print(context_data.get('test_result'))
+    elif message.text == 'Изменить ответ':
+        # TODO
+        pass
+    elif message.text == 'Завершить тест':
+        # TODO
+        pass

@@ -103,3 +103,15 @@ def markup_for_answers(answers: list) -> ReplyKeyboardMarkup:
     input_field_placeholder='Выберете ответ'
     )
     return result_answers
+
+text_for_choice_for_result_preview = ['Отмена', 'Изменить ответ', 'Завершить тест']
+choice_for_result_preview_kb = [
+    [KeyboardButton(text='Изменить ответ'),
+     KeyboardButton(text='Завершить тест'),
+     KeyboardButton(text='Отмена')]
+]
+choice_for_result_preview = ReplyKeyboardMarkup(
+    keyboard=choice_for_result_preview_kb,
+    resize_keyboard=True,
+    input_field_placeholder='Выберете пункт'
+)

@@ -84,6 +84,13 @@ async def message_for_result_review(state: FSMContext) -> str:
             answer += f'<i>{g + 1})</i> {test.all_answers[i][g]}\n'
     return answer
 
+async def message_for_answer_question(now_question:int, test:Test) -> str:
+    answer = f'<i>Вопрос №{now_question + 1}</i>\n{test.all_questions[now_question]}\n'
+    for i in range(test.all_answers[now_question]):
+        answer += f' {i + 1}) {test.all_answers[now_question][i]}'
+    return answer
+
+
 # Обработчик команды /start
 @router.message(Command('start'))
 async def start_command(message: Message, state: FSMContext) -> None:
@@ -112,9 +119,9 @@ async def my_profile_command(message: Message, state: FSMContext) -> None:
     elif user_data.status == 'S':
         markup = kb.edit_my_profile_for_student
         await state.set_state(Form.waiting_for_update_for_student)
-    answer = await message_for_profile(message.from_user.id)
+    answer_text = await message_for_profile(message.from_user.id)
     # Отправляем сообщение в ответ на команду /my_profile
-    await message.answer(answer, parse_mode="HTML", reply_markup=markup)
+    await message.answer(answer_text, parse_mode="HTML", reply_markup=markup)
 
 # Обработчик команды /create_test
 @router.message(Command('create_test'))
@@ -442,21 +449,24 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
 async def solving_question(message: Message, state: FSMContext) -> None:
     context_data = await state.get_data()
     test:Test = context_data.get('test')
+    form_answer = True
     if message.text not in test.all_answers[context_data.get('now_question') - 1]:
         answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question') - 1])
-        await message.answer(f'Выберете один из <u>предложенных ответов</u>\n<i>Вопрос №{context_data.get("now_question")}</i>\n{test.all_questions[context_data.get("now_question") - 1]}', parse_mode="HTML", reply_markup=answer_markup)
+        answer_text = await message_for_answer_question(context_data.get("now_question") - 1, test)
+        await message.answer(answer_text, parse_mode="HTML", reply_markup=answer_markup)
         await state.set_state(Form.waiting_for_solve_test)
+        form_answer = False
     elif message.text == test.all_answers[context_data.get('now_question') - 1][test.right_answers[context_data.get('now_question') - 1] - 1]:
         await state.update_data(test_result=[*context_data.get('test_result'), [1]])
     else:
         await state.update_data(test_result=[*context_data.get('test_result'), [0, test.all_answers[context_data.get('now_question') - 1].index(message.text)]])
-    if len(test.all_questions) > context_data.get('now_question'):
+    if len(test.all_questions) > context_data.get('now_question') and form_answer:
         answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question')])
-        await message.answer(f'<i>Вопрос №{context_data.get("now_question") + 1}</i>\n{test.all_questions[context_data.get("now_question")]}', parse_mode="HTML", reply_markup=answer_markup)
+        answer_text = await message_for_answer_question(context_data.get("now_question"), test)
+        await message.answer(answer_text, parse_mode="HTML", reply_markup=answer_markup)
         await state.update_data(now_question=context_data.get("now_question") + 1)
         await state.set_state(Form.waiting_for_solve_test)
-    else:
-        # TODO
+    elif form_answer:
         answer_text = await message_for_result_review(state)
         await message.answer(f'Вы <i>ответили</i> на все вопросы', parse_mode="HTML")
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_result_preview)
@@ -468,8 +478,56 @@ async def result_preview_aftermath(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отказались от <u>прохождения теста</u>', parse_mode="HTML")
         await state.clear()
     elif message.text == 'Изменить ответ':
-        # TODO
-        pass
+        await message.answer('Напишите <i>номер вопроса</i> ответ в котором вы хотите изменить', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_edit_answers)
     elif message.text == 'Завершить тест':
-        # TODO
-        pass
+        context_data = await state.get_data()
+        test:Test = context_data.get('test')
+        context_test_result = context_data.get('test_result')
+        test_result = TestResult(test.test_id, message.from_user.id, datetime.now, context_test_result.count([1]), len(test.all_questions), [[i + 1, context_test_result[i][1]] for i in range(len(context_test_result)) if context_test_result[i][0] == 0])
+        connection.insert_new_test_result(test_result)
+        if test.visible_result:
+            # TODO
+            await message.answer(f'Тест "{test.test_name}" успешно <u>пройден</u>\n\n<u>Результаты:</u>\n{test_result.count_correct_answers}/{test_result.count_answers_in_total} - {test_result.recomend_mark()}\n<b>Рекомендуемая ошибка:</b> {test_result.recomend_mark()}', parse_mode="HTML")
+        else:
+            await message.answer(f'Тест "{test.test_name}" успешно <u>пройден</u>\nК сожелению доступ полным к результату был ограничен автором. Он сможет открыть доступ позже.\n\n<u>Результаты:</u>\n{test_result.count_correct_answers}/{test_result.count_answers_in_total} - {test_result.recomend_mark()}\n<b>Рекомендуемая ошибка:</b> {test_result.recomend_mark()}', parse_mode="HTML")
+            await state.clear()
+
+@router.message(Form.waiting_for_edit_answers)
+async def edit_answer(message: Message, state: FSMContext) -> None:
+    try:
+        context_data = await state.get_data()
+        test:Test = context_data.get('test')
+        answer_markup = kb.markup_for_answers(test.all_answers[int(message.text) - 1])
+        answer_text = await message_for_answer_question(int(message.text) - 1, test)
+        await message.answer(answer_text, parse_mode="HTML",  reply_markup=answer_markup)
+        await state.update_data(now_edit_question=int(message.text))
+        await state.set_state(Form.waiting_for_edit_answers_result)
+    except (TypeError, IndexError):
+        await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>)', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
+        await state.set_state(Form.waiting_for_edit_answers)
+
+@router.message(Form.waiting_for_edit_answers_result)
+async def edit_answer(message: Message, state: FSMContext) -> None:
+    context_data = await state.get_data()
+    test:Test = context_data.get('test')
+    form_answer = True
+    if message.text not in test.all_answers[context_data.get('now_edit_question') - 1]:
+        answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_edit_question') - 1])
+        answer_text = await message_for_answer_question(context_data.get("now_edit_question") - 1, test)
+        await message.answer(answer_text, parse_mode="HTML", reply_markup=answer_markup)
+        await state.set_state(Form.waiting_for_edit_answers)
+        form_answer = False
+    elif message.text == test.all_answers[context_data.get('now_edit_question') - 1][test.right_answers[context_data.get('now_edit_question') - 1] - 1]:
+        test_result = context_data.get('test_result')
+        test_result[context_data.get('now_edit_question') - 1] = [1]
+        await state.update_data(test_result=test_result)
+    else:
+        test_result = context_data.get('test_result')
+        test_result[context_data.get('now_edit_question') - 1] = [0, test.all_answers[context_data.get('now_edit_question') - 1].index(message.text)]
+        await state.update_data(test_result=test_result)
+    if form_answer:
+        answer_text = await message_for_result_review(state)
+        await message.answer(f'Ответ <i>изменен</i>', parse_mode="HTML")
+        await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_result_preview)
+        await state.set_state(Form.waiting_for_result_preview_aftermath)

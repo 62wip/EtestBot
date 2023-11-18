@@ -95,8 +95,8 @@ start_solve_test = ReplyKeyboardMarkup(
 
 def markup_for_answers(answers: list) -> ReplyKeyboardMarkup:
     answers_kb = []
-    for i in answers:
-        answers_kb.append(KeyboardButton(text=i))
+    for i in range(len(answers)):
+        answers_kb.append(KeyboardButton(text=f'{i + 1}) {answers[i]}'))
     result_answers = ReplyKeyboardMarkup(
     keyboard=[answers_kb],
     resize_keyboard=True,

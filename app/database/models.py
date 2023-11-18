@@ -36,3 +36,15 @@ class TestResult():
             self.count_correct_answers = count_correct_answers
             self.count_answers_in_total = count_answers_in_total
             self.answers_with_mistakes = answers_with_mistakes
+    def procent_of_right(self):
+        return round(self.self.count_correct_answers / self.count_answers_in_total * 100)
+    
+    def recomend_mark(self):
+        if self.procent_of_right() >= 85:
+            return 5
+        elif self.procent_of_right() >= 65:
+            return 4
+        elif self.procent_of_right() >= 40:
+            return 3
+        else:
+            return 2

@@ -10,7 +10,7 @@ class User():
         self.group = group
 
 class Test():
-    def __init__(self, test_id: int or None, creator_user_id: int, creation_time, test_key: UUID, test_name: str, subject_name: str or None,  all_questions: list, all_answers: list, right_answers: list, visible_result: bool) -> None:
+    def __init__(self, test_id: int or None, creator_user_id: int, creation_time, test_key: UUID, test_name: str, subject_name: str or None,  all_questions: list[str], all_answers: list[list[str]], right_answers: list[int], visible_result: bool) -> None:
         self.test_id = test_id
         self.creator_user_id = creator_user_id
         try:
@@ -26,7 +26,7 @@ class Test():
         self.visible_result = visible_result
 
 class TestResult():
-    def __init__(self, solved_test_id: int, who_done_test: int, completion_time, count_correct_answers: int, count_answers_in_total: int, answers_with_mistakes: list) -> None:
+    def __init__(self, solved_test_id: int, who_done_test: int, completion_time, count_correct_answers: int, count_answers_in_total: int, answers_with_mistakes: list[list[int]] or list[list[int, int]]) -> None:
         self.who_done_test = who_done_test
         try:
             self.completion_time = completion_time.strftime('%Y-%m-%d %H:%M:%S')

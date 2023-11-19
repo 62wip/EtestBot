@@ -8,6 +8,7 @@ set_status_kb = [
 set_status = ReplyKeyboardMarkup(
     keyboard=set_status_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Выберете кто вы'
 )
 
@@ -17,11 +18,13 @@ cancel_kb = [
 cancel_for_feedback = ReplyKeyboardMarkup(
     keyboard=cancel_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Нажмите для отмены'
 )
 cancel_for_create_test = ReplyKeyboardMarkup(
     keyboard=cancel_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Нажмите для отмены создание теста'
 )
 
@@ -34,6 +37,7 @@ edit_my_profile_for_student_kb = [
 edit_my_profile_for_student = ReplyKeyboardMarkup(
     keyboard=edit_my_profile_for_student_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Что вы хотите изменить'
 )
 
@@ -45,6 +49,7 @@ edit_my_profile_for_teacher_kb = [
 edit_my_profile_for_teacher = ReplyKeyboardMarkup(
     keyboard=edit_my_profile_for_teacher_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Что вы хотите изменить'
 )
 
@@ -55,6 +60,7 @@ set_question_for_test_kb = [
 set_question_for_test = ReplyKeyboardMarkup(
     keyboard=set_question_for_test_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )
 text_for_choice_for_test_preview = ['Отмена', 'Удалить вопрос', 'Добавить вопрос', 'Опубликовать тест']
@@ -67,6 +73,7 @@ choice_for_test_preview_kb = [
 choice_for_test_preview = ReplyKeyboardMarkup(
     keyboard=choice_for_test_preview_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )
 
@@ -79,6 +86,7 @@ choosing_visible_result_kb = [
 choosing_visible_result = ReplyKeyboardMarkup(
     keyboard=choosing_visible_result_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )
 
@@ -90,6 +98,7 @@ start_solve_test_kb = [
 start_solve_test = ReplyKeyboardMarkup(
     keyboard=start_solve_test_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Выберете пункт'
 )
 
@@ -100,6 +109,7 @@ def markup_for_answers(answers: list) -> ReplyKeyboardMarkup:
     result_answers = ReplyKeyboardMarkup(
     keyboard=[answers_kb],
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Выберете ответ'
     )
     return result_answers
@@ -113,5 +123,13 @@ choice_for_result_preview_kb = [
 choice_for_result_preview = ReplyKeyboardMarkup(
     keyboard=choice_for_result_preview_kb,
     resize_keyboard=True,
+    one_time_keyboard=True,
     input_field_placeholder='Выберете пункт'
+)
+
+show_more_result_kb = [
+    [InlineKeyboardButton(text='Подробнее', callback_data='show_more_test_result')]
+]
+show_more_result = InlineKeyboardMarkup(
+    inline_keyboard=show_more_result_kb
 )

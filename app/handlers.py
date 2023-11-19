@@ -17,6 +17,7 @@ from config import TG_ID
 
 router = Router()
 connection = Connection()
+data_for_show_result = {}
 
 async def check_first_use(message, state: FSMContext) -> None:
     if connection.checking_first_use(message.from_user.id):
@@ -88,6 +89,28 @@ async def message_for_answer_question(now_question:int, test:Test) -> str:
     answer = f'<i>Вопрос №{now_question + 1}</i>\n{test.all_questions[now_question]}\n'
     for i in range(test.all_answers[now_question]):
         answer += f' {i + 1}) {test.all_answers[now_question][i]}'
+    return answer
+
+async def message_for_show_more_test_result(test: Test, test_result: TestResult) -> str:
+    user_data = connection.select_for_user_class(test.creator_user_id)
+    answer = f'<b>Результаты теста "{test.test_name}"</b>\n'
+    if test.subject_name != None:
+        answer += f'<i>Предмет:</i> {test.subject_name}\n'
+    answer += f'''<i>Автор</i>: {user_data.fio}
+
+<u>Ответы на вопросы:</u>
+'''
+    for i in range(len(test.all_questions)):
+        answer += f'<b>{i + 1}.</b> {test.all_questions[i]}\n'
+        for g in range(len(test.all_answers[i])):
+            if test.right_answers[i] == g + 1:
+                answer += '✔️'
+            elif test_result.answers_with_mistakes[i][0] == 0:
+                if test_result.answers_with_mistakes[i][1] == g + 1:
+                    answer += '❌'
+            else:
+                answer += ' '
+            answer += f'<i>{g + 1})</i> {test.all_answers[i][g]}\n'
     return answer
 
 
@@ -488,10 +511,11 @@ async def result_preview_aftermath(message: Message, state: FSMContext) -> None:
         connection.insert_new_test_result(test_result)
         if test.visible_result:
             # TODO
-            await message.answer(f'Тест "{test.test_name}" успешно <u>пройден</u>\n\n<u>Результаты:</u>\n{test_result.count_correct_answers}/{test_result.count_answers_in_total} - {test_result.recomend_mark()}\n<b>Рекомендуемая ошибка:</b> {test_result.recomend_mark()}', parse_mode="HTML")
+            data_for_show_result[message.from_user.id] = [test, test_result]
+            await message.answer(f'Тест "{test.test_name}" успешно <u>пройден</u>\n\n<u>Результаты:</u>\n{test_result.count_correct_answers}/{test_result.count_answers_in_total} - {test_result.recomend_mark()}\n<b>Рекомендуемая ошибка:</b> {test_result.recomend_mark()}', parse_mode="HTML", reply_markup=kb.show_more_result)
         else:
             await message.answer(f'Тест "{test.test_name}" успешно <u>пройден</u>\nК сожелению доступ полным к результату был ограничен автором. Он сможет открыть доступ позже.\n\n<u>Результаты:</u>\n{test_result.count_correct_answers}/{test_result.count_answers_in_total} - {test_result.recomend_mark()}\n<b>Рекомендуемая ошибка:</b> {test_result.recomend_mark()}', parse_mode="HTML")
-            await state.clear()
+        await state.clear()
 
 @router.message(Form.waiting_for_edit_answers)
 async def edit_answer(message: Message, state: FSMContext) -> None:
@@ -531,3 +555,8 @@ async def edit_answer(message: Message, state: FSMContext) -> None:
         await message.answer(f'Ответ <i>изменен</i>', parse_mode="HTML")
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_result_preview)
         await state.set_state(Form.waiting_for_result_preview_aftermath)
+
+@router.callback_query('show_more_test_result')
+async def show_more_result(callback: CallbackQuery):
+    answer_text = await message_for_show_more_test_result(data_for_show_result[callback.from_user.id][0], data_for_show_result[callback.from_user.id][1])
+    callback.message.edit_text(answer_text, parse_mode="HTML")

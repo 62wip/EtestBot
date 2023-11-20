@@ -147,3 +147,5 @@ class Connection():
                 self.db.commit()
             except pymysql.Error as e:
                 print(f"Error in insert into table: {e}")
+# TODO: починить согранение в бд резульата теста
+# TODO: select_test_result_by_user_id

@@ -68,10 +68,9 @@ class Connection():
                 WHERE user_id = {user_id}'''
                 cursor.execute(execute_select_for_my_profile)
                 result = cursor.fetchall()[0]
+                return User(result['user_id'], result['username'], result['fio'], result['status'], result['group'])
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
-
-        return User(result['user_id'], result['username'], result['fio'], result['status'], result['group'])
     
     def update_fio_for_my_profile(self, user_id: int, fio: str) -> None:
         with self.db.cursor() as cursor:
@@ -130,12 +129,11 @@ class Connection():
                 WHERE test_key = "{str(key)}"'''
                 cursor.execute(execute_select_for_test_class_by_uuid)
                 result = cursor.fetchall()[0]
+                return Test(result['id'], result['creator_user_id'], datetime.strftime(result['creation_time'], '%Y-%m-%d %H:%M:%S'), result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])
             except IndexError:
                 return False
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
-
-        return Test(result['id'], result['creator_user_id'], datetime.strftime(result['creation_time'], '%Y-%m-%d %H:%M:%S'), result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])
     
     def insert_new_test_result(self, test_result: TestResult) -> None:
         with self.db.cursor() as cursor:
@@ -152,13 +150,13 @@ class Connection():
         with self.db.cursor() as cursor:
             try:
                 execute_select_for_test_result_by_user_id_and_test_id = f'''SELECT * FROM `test_result` 
-                WHERE who_done_test = {user_id} solved_test_id = {test_id}'''
+                WHERE who_done_test = {user_id} AND solved_test_id = {test_id}'''
                 cursor.execute(execute_select_for_test_result_by_user_id_and_test_id)
-                result = cursor.fetchall()[0]
+                result = cursor.fetchall()[-1]
+                return TestResult(result['solved_test_id'], result['who_done_test'], datetime.strftime(result['completion_time'], '%Y-%m-%d %H:%M:%S'), result['count_correct_answers'], result['count_answers_in_total'], [i.split(':') for i in result['answers_with_mistakes'].split('-_-')])
             except IndexError:
                 return False
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
 
-# TO-DO: answers with mistakes
-        return TestResult(result['solved_test_id'], result['who_done_test'], datetime.strftime(result['completion_time'], '%Y-%m-%d %H:%M:%S'), result['count_correct_answers'], result['count_answers_in_total'], result['answers_with_mistakes'])
+# Стоит помнить про [0] индекс в курсор fatchall

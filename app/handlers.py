@@ -124,9 +124,8 @@ async def message_for_show_more_test_result(test: Test, test_result: TestResult)
         for g in range(len(test.all_answers[i])):
             if test.right_answers[i] == g + 1:
                 answer += '✔️'
-            elif test_result.answers_with_mistakes[i][0] == 0:
-                if test_result.answers_with_mistakes[i][1] == g + 1:
-                    answer += '❌'
+            elif [k[1] for k in test_result.answers_with_mistakes if i + 1 == k[0]] == [g + 1]:
+                answer += '❌'
             else:
                 answer += ' '
             answer += f'<i>{g + 1})</i> {test.all_answers[i][g]}\n'
@@ -450,11 +449,18 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
            await message.answer('Вы не можете пройти свой же <u>тест</u>', parse_mode="HTML")
            await state.clear()
         # TODO: проверка на наличие прошлого релузьтата этого же теста
+        elif type(connection.select_for_test_result_by_user_id_and_test_id(message.from_user.id, solving_test.test_id)) == TestResult:
+            await state.update_data(test=solving_test, now_question=0, test_result=[])
+            answer_text = await message_for_finded_test(solving_test)
+            await message.answer(answer_text, parse_mode="HTML")
+            await message.answer('Вы <u>уже проходили</u> этот тест. Хотите пройти его еще раз?\n*<i>Результат этой попытки не заменит прошлую</i>', parse_mode="HTML", reply_markup=kb.start_solve_test)
+            await state.set_state(Form.waiting_for_start_test)
         else:
             await state.update_data(test=solving_test, now_question=0, test_result=[])
             answer_text = await message_for_finded_test(solving_test)
-            await message.answer(answer_text, parse_mode="HTML",reply_markup=kb.start_solve_test)
+            await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.start_solve_test)
             await state.set_state(Form.waiting_for_start_test)
+
     except ValueError:
         await message.answer('Пожалуйста, введите <i>ключ</i> от существующего теста', parse_mode="HTML")
         await state.set_state(Form.waiting_for_start_test)
@@ -517,10 +523,9 @@ async def result_preview_aftermath(message: Message, state: FSMContext) -> None:
         test_result = TestResult(test.test_id, message.from_user.id, datetime.now(), context_test_result.count([1]), len(test.all_questions), [[i + 1, context_test_result[i][1]] for i in range(len(context_test_result)) if context_test_result[i][0] == 0])
         connection.insert_new_test_result(test_result)
         if test.visible_result:
-            # TODO: привесить inline кнопку
             data_for_show_result[message.from_user.id] = [test, test_result]
-            await message.answer(f'Тест "{test.test_name}" успешно <u>пройден</u>\n\n<u>Результаты:</u>\n{test_result.count_correct_answers}/{test_result.count_answers_in_total} - {test_result.procent_of_right()}%\n<b>Рекомендуемая оценка:</b> {test_result.recomend_mark()}', parse_mode="HTML")
-            # , reply_markup=kb.show_more_result
+            await message.answer(f'Тест "{test.test_name}" успешно <u>пройден</u>\n\n<u>Результаты:</u>\n{test_result.count_correct_answers}/{test_result.count_answers_in_total} - {test_result.procent_of_right()}%\n<b>Рекомендуемая оценка:</b> {test_result.recomend_mark()}', parse_mode="HTML" , reply_markup=kb.show_more_result)
+            #
         else:
             await message.answer(f'Тест "{test.test_name}" успешно <u>пройден</u>\nК сожелению доступ полным к результату был ограничен автором. Он сможет открыть доступ позже.\n\n<u>Результаты:</u>\n{test_result.count_correct_answers}/{test_result.count_answers_in_total} - {test_result.procent_of_right()}%\n<b>Рекомендуемая оценка:</b> {test_result.recomend_mark()}', parse_mode="HTML")
         await state.clear()
@@ -565,8 +570,7 @@ async def edit_answer(message: Message, state: FSMContext) -> None:
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_result_preview)
         await state.set_state(Form.waiting_for_result_preview_aftermath)
 
-# TODO: разобраться с callback'ом и вывести обширный результат
-# @router.callback_query(callable('show_more_test_result'))
-# async def show_more_result(callback: CallbackQuery):
-#     answer_text = await message_for_show_more_test_result(data_for_show_result[callback.from_user.id][0], data_for_show_result[callback.from_user.id][1])
-#     callback.message.edit_text(answer_text, parse_mode="HTML")
+@router.callback_query(F.data == 'show_more_test_result')
+async def show_more_result(callback: CallbackQuery):
+    answer_text = await message_for_show_more_test_result(data_for_show_result[callback.from_user.id][0], data_for_show_result[callback.from_user.id][1])
+    await callback.message.edit_text(answer_text, parse_mode="HTML")

@@ -1,4 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, KeyboardButton, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, KeyboardButton, InlineKeyboardButton 
 
 text_for_set_status = ['Преподаватель', 'Ученик']
 set_status_kb = [
@@ -127,9 +127,9 @@ choice_for_result_preview = ReplyKeyboardMarkup(
     input_field_placeholder='Выберете пункт'
 )
 
-# show_more_result_kb = [
-#     [InlineKeyboardButton(text='Подробнее', callback_data='show_more_test_result')]
-# ]
-# show_more_result = InlineKeyboardMarkup(
-#     inline_keyboard=show_more_result_kb
-# )
+show_more_result_kb = [
+    [InlineKeyboardButton(text='Подробнее', callback_data='show_more_test_result')]
+]
+show_more_result = InlineKeyboardMarkup(
+    inline_keyboard=show_more_result_kb
+)

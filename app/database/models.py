@@ -32,10 +32,10 @@ class TestResult():
             self.completion_time = completion_time.strftime('%Y-%m-%d %H:%M:%S')
         except AttributeError:
             self.completion_time = completion_time
-            self.solved_test_id = solved_test_id
-            self.count_correct_answers = count_correct_answers
-            self.count_answers_in_total = count_answers_in_total
-            self.answers_with_mistakes = answers_with_mistakes
+        self.solved_test_id = solved_test_id
+        self.count_correct_answers = count_correct_answers
+        self.count_answers_in_total = count_answers_in_total
+        self.answers_with_mistakes = answers_with_mistakes
     def procent_of_right(self):
         return round(self.count_correct_answers / self.count_answers_in_total * 100)
     

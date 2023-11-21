@@ -489,7 +489,7 @@ async def solving_question(message: Message, state: FSMContext) -> None:
     elif variant == test.all_answers[context_data.get('now_question') - 1][test.right_answers[context_data.get('now_question') - 1] - 1]:
         await state.update_data(test_result=[*context_data.get('test_result'), [1]])
     else:
-        await state.update_data(test_result=[*context_data.get('test_result'), [0, test.all_answers[context_data.get('now_question') - 1].index(variant)]])
+        await state.update_data(test_result=[*context_data.get('test_result'), [0, test.all_answers[context_data.get('now_question') - 1].index(variant) + 1]])
     if len(test.all_questions) > context_data.get('now_question') and form_answer:
         answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question')])
         answer_text = await message_for_answer_question(context_data.get("now_question"), test)
@@ -514,7 +514,7 @@ async def result_preview_aftermath(message: Message, state: FSMContext) -> None:
         context_data = await state.get_data()
         test:Test = context_data.get('test')
         context_test_result = context_data.get('test_result')
-        test_result = TestResult(test.test_id, message.from_user.id, datetime.now, context_test_result.count([1]), len(test.all_questions), [[i + 1, context_test_result[i][1]] for i in range(len(context_test_result)) if context_test_result[i][0] == 0])
+        test_result = TestResult(test.test_id, message.from_user.id, datetime.now(), context_test_result.count([1]), len(test.all_questions), [[i + 1, context_test_result[i][1]] for i in range(len(context_test_result)) if context_test_result[i][0] == 0])
         connection.insert_new_test_result(test_result)
         if test.visible_result:
             # TODO: привесить inline кнопку
@@ -557,7 +557,7 @@ async def edit_answer(message: Message, state: FSMContext) -> None:
         await state.update_data(test_result=test_result)
     else:
         test_result = context_data.get('test_result')
-        test_result[context_data.get('now_edit_question') - 1] = [0, test.all_answers[context_data.get('now_edit_question') - 1].index(variant)]
+        test_result[context_data.get('now_edit_question') - 1] = [0, test.all_answers[context_data.get('now_edit_question') - 1].index(variant) + 1]
         await state.update_data(test_result=test_result)
     if form_answer:
         answer_text = await message_for_result_review(state)

@@ -160,4 +160,5 @@ class Connection():
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
 
+# TO-DO: answers with mistakes
         return TestResult(result['solved_test_id'], result['who_done_test'], datetime.strftime(result['completion_time'], '%Y-%m-%d %H:%M:%S'), result['count_correct_answers'], result['count_answers_in_total'], result['answers_with_mistakes'])

@@ -146,7 +146,7 @@ class Connection():
             except pymysql.Error as e:
                 print(f"Error in insert into table: {e}")
 
-    def select_for_test_result_by_user_id_and_test_id(self, user_id: int, test_id: int) -> TestResult:
+    def select_for_last_test_result_class_by_user_id_and_test_id(self, user_id: int, test_id: int) -> TestResult:
         with self.db.cursor() as cursor:
             try:
                 execute_select_for_test_result_by_user_id_and_test_id = f'''SELECT * FROM `test_result` 
@@ -154,6 +154,57 @@ class Connection():
                 cursor.execute(execute_select_for_test_result_by_user_id_and_test_id)
                 result = cursor.fetchall()[-1]
                 return TestResult(result['solved_test_id'], result['who_done_test'], datetime.strftime(result['completion_time'], '%Y-%m-%d %H:%M:%S'), result['count_correct_answers'], result['count_answers_in_total'], [i.split(':') for i in result['answers_with_mistakes'].split('-_-')])
+            except IndexError:
+                return False
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")
+        
+    def select_for_tests_list_by_user_id(self, user_id: int) -> list[Test]:
+        with self.db.cursor() as cursor:
+            try:
+                execute_select_for_tests_class_by_user_id = f'''SELECT * FROM `test` 
+                WHERE creator_user_id = {user_id}'''
+                cursor.execute(execute_select_for_tests_class_by_user_id)
+                result = cursor.fetchall()
+                list_test = []
+                for i in result:
+                    list_test.append(Test(i['id'], i['creator_user_id'], datetime.strftime(i['creation_time'], '%Y-%m-%d %H:%M:%S'), i['test_key'], i['test_name'], i['subject_name'], i['all_questions'].split('-_-'), [i.split('-=-') for i in i['all_answers'].split('-_-')], list(map(int, i['right_answers'].split('-_-'))), i['visible_result']))
+                return list_test
+            # мейби другая ошибка
+            except IndexError:
+                return False
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")
+    
+    def select_for_test_results_list_by_user_id(self, user_id: int) -> list[TestResult]:
+        with self.db.cursor() as cursor:
+            try:
+                execute_select_for_test_result_by_user_id_and_test_id = f'''SELECT * FROM `test_result` 
+                WHERE who_done_test = {user_id}'''
+                cursor.execute(execute_select_for_test_result_by_user_id_and_test_id)
+                result = cursor.fetchall()
+                list_test_result = []
+                for i in result:
+                    list_test_result.append(TestResult(i['solved_test_id'], i['who_done_test'], datetime.strftime(i['completion_time'], '%Y-%m-%d %H:%M:%S'), i['count_correct_answers'], i['count_answers_in_total'], [i.split(':') for i in i['answers_with_mistakes'].split('-_-')]))
+                return list_test_result
+            # мейби другая ошибка
+            except IndexError:
+                return False
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")
+
+    def select_for_test_results_list_by_test_id(self, test_id: int) -> list[TestResult]:
+        with self.db.cursor() as cursor:
+            try:
+                execute_select_for_test_result_by_user_id_and_test_id = f'''SELECT * FROM `test_result` 
+                WHERE solved_test_id = {test_id}'''
+                cursor.execute(execute_select_for_test_result_by_user_id_and_test_id)
+                result = cursor.fetchall()
+                list_test_result = []
+                for i in result:
+                    list_test_result.append(TestResult(i['solved_test_id'], i['who_done_test'], datetime.strftime(i['completion_time'], '%Y-%m-%d %H:%M:%S'), i['count_correct_answers'], i['count_answers_in_total'], [i.split(':') for i in i['answers_with_mistakes'].split('-_-')]))
+                return list_test_result
+            # мейби другая ошибка
             except IndexError:
                 return False
             except pymysql.Error as e:

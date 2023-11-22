@@ -448,7 +448,6 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
         elif solving_test.creator_user_id == message.from_user.id:
            await message.answer('Вы не можете пройти свой же <u>тест</u>', parse_mode="HTML")
            await state.clear()
-        # TODO: проверка на наличие прошлого релузьтата этого же теста
         elif type(connection.select_for_last_test_result_class_by_user_id_and_test_id(message.from_user.id, solving_test.test_id)) == TestResult:
             await state.update_data(test=solving_test, now_question=0, test_result=[])
             answer_text = await message_for_finded_test(solving_test)

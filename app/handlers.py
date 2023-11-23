@@ -131,6 +131,10 @@ async def message_for_show_more_test_result(test: Test, test_result: TestResult)
             answer += f'<i>{g + 1})</i> {test.all_answers[i][g]}\n'
     return answer
 
+async def message_for_my_test(tests: list[Test]) -> str:
+    answer = f'<i>Все ваши тесты:</i>\n'
+    for i in range(len(tests)):
+        answer += f'{i + 1}. Тест <b>"{tests[i].test_name}"</b>'
 
 # Обработчик команды /start
 @router.message(Command('start'))
@@ -180,9 +184,13 @@ async def solve_test_command(message: Message, state: FSMContext) -> None:
 
 # Обработчик команды /my_test
 @router.message(Command('my_test'))
-async def my_test_command(message: Message) -> None:
+async def my_test_command(message: Message, state: FSMContext) -> None:
     # Отправляем сообщение в ответ на команду /my_test
-    await message.answer('my_test', parse_mode="HTML")
+    tests = connection.select_for_tests_list_by_user_id(message.from_user.id)
+    answer_text = message_for_my_test(tests)
+    await message.answer(answer_text, parse_mode="HTML")
+    await message.answer('Напишите <u>номер теста</u>, о котором вы хотите узнать продробнее', parse_mode="HTML")
+    await state.set_state(Form.waiting_for_choosing_my_tests)
 
 # Обработчик команды /my_result
 @router.message(Command('my_result'))

@@ -1,4 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, KeyboardButton, InlineKeyboardButton 
+from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, KeyboardButton, InlineKeyboardButton
 
 text_for_set_status = ['Преподаватель', 'Ученик']
 set_status_kb = [
@@ -56,7 +56,6 @@ edit_my_profile_for_teacher = ReplyKeyboardMarkup(
 set_question_for_test_kb = [
     [KeyboardButton(text='Предпросмотр')],
     [KeyboardButton(text='Отмена')],
-     
 ]
 set_question_for_test = ReplyKeyboardMarkup(
     keyboard=set_question_for_test_kb,
@@ -103,7 +102,7 @@ start_solve_test = ReplyKeyboardMarkup(
     input_field_placeholder='Выберете пункт'
 )
 
-def markup_for_answers(answers: list) -> ReplyKeyboardMarkup:
+async def markup_for_answers(answers: list) -> ReplyKeyboardMarkup:
     answers_kb = []
     for i in range(len(answers)):
         answers_kb.append([KeyboardButton(text=f'{i + 1}) {answers[i]}')])
@@ -125,8 +124,7 @@ choice_for_result_preview = ReplyKeyboardMarkup(
     keyboard=choice_for_result_preview_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Выберете пункт',
-    row_width=1
+    input_field_placeholder='Выберете пункт'
     )
 
 show_more_result_kb = [
@@ -135,3 +133,20 @@ show_more_result_kb = [
 show_more_result = InlineKeyboardMarkup(
     inline_keyboard=show_more_result_kb
 )
+
+text_for_choice_for_now_test = ['Вопросы теста', 'Скрыть подробные результаты', 'Открыть подробные результаты']
+async def markup_for_choice_for_now_test(visible_result: bool):
+    choice_for_now_test_kb = [
+    [KeyboardButton(text='Вопросы теста')]
+]
+    if visible_result:
+        choice_for_now_test_kb.append([KeyboardButton(text='Скрыть подробные результаты')])
+    else:
+        choice_for_now_test_kb.append([KeyboardButton(text='Открыть подробные результаты')])
+    choice_for_now_test = ReplyKeyboardMarkup(
+        keyboard=choice_for_now_test_kb,
+        resize_keyboard=True,
+        one_time_keyboard=True,
+        input_field_placeholder='Выберете пункт'
+    )
+    return choice_for_now_test

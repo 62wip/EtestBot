@@ -136,6 +136,16 @@ async def message_for_my_test(tests: list[Test]) -> str:
     for i in range(len(tests)):
         answer += f'{i + 1}. Тест <b>"{tests[i].test_name}"</b>'
 
+async def message_for_now_test(test: Test, test_results: list[TestResult] or False):
+    answer_text = f'Тест "{test.test_name}"\nКол-во вопросов: {len(test.all_questions)}\n\n'
+    if not(test_results):
+        answer_text += 'Тест пока <i>никто не проходил</i>'
+    else:
+        answer_text += 'Рeзультаты других людей:\n'
+        for i in range(test_results):
+            user_who_done_test = connection.select_for_user_class(test_results[i].who_done_test)
+            answer_text += f'<b>{i + 1}. {user_who_done_test.fio}</b> - <i>{test_results[i].procent_of_right}</i>; рекомендуемая оценка: <i>{test_results[i].recomend_mark}</i>'
+
 # Обработчик команды /start
 @router.message(Command('start'))
 async def start_command(message: Message, state: FSMContext) -> None:
@@ -187,6 +197,7 @@ async def solve_test_command(message: Message, state: FSMContext) -> None:
 async def my_test_command(message: Message, state: FSMContext) -> None:
     # Отправляем сообщение в ответ на команду /my_test
     tests = connection.select_for_tests_list_by_user_id(message.from_user.id)
+    await state.update_data(tests=tests)
     answer_text = message_for_my_test(tests)
     await message.answer(answer_text, parse_mode="HTML")
     await message.answer('Напишите <u>номер теста</u>, о котором вы хотите узнать продробнее', parse_mode="HTML")
@@ -481,7 +492,7 @@ async def start_solving_test(message: Message, state: FSMContext) -> None:
         context_data = await state.get_data()
         test:Test = context_data.get('test')
         await state.update_data(now_question=1)
-        answer_markup = kb.markup_for_answers(test.all_answers[0])
+        answer_markup = await kb.markup_for_answers(test.all_answers[0])
         answer_text = await message_for_answer_question(0, test)
         await message.answer(answer_text, parse_mode="HTML", reply_markup=answer_markup)
         await state.set_state(Form.waiting_for_solve_question)
@@ -493,7 +504,7 @@ async def solving_question(message: Message, state: FSMContext) -> None:
     form_answer = True
     variant = message.text.split(' ', 1)[1]
     if variant not in test.all_answers[context_data.get('now_question') - 1]:
-        answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question') - 1])
+        answer_markup = await kb.markup_for_answers(test.all_answers[context_data.get('now_question') - 1])
         answer_text = await message_for_answer_question(context_data.get("now_question") - 1, test)
         
         await message.answer(f'Пожалуйста, выберете <i>пункт из списка</i>\n{answer_text}', parse_mode="HTML", reply_markup=answer_markup)
@@ -504,7 +515,7 @@ async def solving_question(message: Message, state: FSMContext) -> None:
     else:
         await state.update_data(test_result=[*context_data.get('test_result'), [0, test.all_answers[context_data.get('now_question') - 1].index(variant) + 1]])
     if len(test.all_questions) > context_data.get('now_question') and form_answer:
-        answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_question')])
+        answer_markup = await kb.markup_for_answers(test.all_answers[context_data.get('now_question')])
         answer_text = await message_for_answer_question(context_data.get("now_question"), test)
         await message.answer(answer_text, parse_mode="HTML", reply_markup=answer_markup)
         await state.update_data(now_question=context_data.get("now_question") + 1)
@@ -542,7 +553,7 @@ async def edit_answer(message: Message, state: FSMContext) -> None:
     try:
         context_data = await state.get_data()
         test:Test = context_data.get('test')
-        answer_markup = kb.markup_for_answers(test.all_answers[int(message.text) - 1])
+        answer_markup = await kb.markup_for_answers(test.all_answers[int(message.text) - 1])
         answer_text = await message_for_answer_question(int(message.text) - 1, test)
         await message.answer(answer_text, parse_mode="HTML",  reply_markup=answer_markup)
         await state.update_data(now_edit_question=int(message.text))
@@ -558,7 +569,7 @@ async def edit_answer(message: Message, state: FSMContext) -> None:
     form_answer = True
     variant = message.text.split(' ', 1)[1]
     if variant not in test.all_answers[context_data.get('now_edit_question') - 1]:
-        answer_markup = kb.markup_for_answers(test.all_answers[context_data.get('now_edit_question') - 1])
+        answer_markup = await kb.markup_for_answers(test.all_answers[context_data.get('now_edit_question') - 1])
         answer_text = await message_for_answer_question(context_data.get("now_edit_question") - 1, test)
         await message.answer(answer_text, parse_mode="HTML", reply_markup=answer_markup)
         await state.set_state(Form.waiting_for_edit_answers)
@@ -581,3 +592,20 @@ async def edit_answer(message: Message, state: FSMContext) -> None:
 async def show_more_result(callback: CallbackQuery):
     answer_text = await message_for_show_more_test_result(data_for_show_result[callback.from_user.id][0], data_for_show_result[callback.from_user.id][1])
     await callback.message.edit_text(answer_text, parse_mode="HTML")
+
+@router.message(Form.waiting_for_choosing_my_tests)
+async def select_my_test(message: Message, state: FSMContext) -> None:
+    try:
+        context_data = await state.get_data()
+        now_test:Test = context_data.get('tests')[int(message.text) - 1]
+        test_results:list[TestResult] = connection.select_for_test_results_list_by_test_id(now_test.test_id)
+        answer_markup = await kb.markup_for_choice_for_now_test(now_test.visible_result)
+        answer_text = await message_for_now_test(now_test, test_results)
+        await message.answer(answer_text, parse_mode="HTML")
+        await message.answer('Напишите <i>номер результата</i>, о котором вы хотитие подробнее или выберете предложенный пункт', parse_mode="HTML",  reply_markup=answer_markup)
+        await state.update_data(now_edit_question=int(message.text))
+        await state.set_state(Form.waiting_for_edit_answers_result)
+    except (TypeError, IndexError):
+        now_test:Test = context_data.get('tests')[int(message.text) - 1]
+        await message.answer(f'Укажите существующий номер результата без посторонних знаков (<i>только число</i>) или выберете предложенный пункт', parse_mode="HTML",  reply_markup=answer_markup)
+        await state.set_state(Form.waiting_for_choosing_my_tests)

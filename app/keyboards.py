@@ -134,19 +134,22 @@ show_more_result = InlineKeyboardMarkup(
     inline_keyboard=show_more_result_kb
 )
 
-text_for_choice_for_now_test = ['Вопросы теста', 'Скрыть подробные результаты', 'Открыть подробные результаты']
 async def markup_for_choice_for_now_test(visible_result: bool):
     choice_for_now_test_kb = [
-    [KeyboardButton(text='Вопросы теста')]
+    [InlineKeyboardButton(text='Предпросмотр теста', callback_data='preview_for_now_test')]
 ]
     if visible_result:
-        choice_for_now_test_kb.append([KeyboardButton(text='Скрыть подробные результаты')])
+        choice_for_now_test_kb.append([InlineKeyboardButton(text='Скрыть подробные результаты', callback_data='make_invisible_result_for_now_test')])
     else:
-        choice_for_now_test_kb.append([KeyboardButton(text='Открыть подробные результаты')])
-    choice_for_now_test = ReplyKeyboardMarkup(
-        keyboard=choice_for_now_test_kb,
-        resize_keyboard=True,
-        one_time_keyboard=True,
-        input_field_placeholder='Выберете пункт'
+        choice_for_now_test_kb.append([InlineKeyboardButton(text='Открыть подробные результаты', callback_data='make_visible_result_for_now_test')])
+    choice_for_now_test = InlineKeyboardMarkup(
+        inline_keyboard=choice_for_now_test_kb
     )
     return choice_for_now_test
+
+back_for_now_test_kb = [
+    [InlineKeyboardButton(text='Назад', callback_data='back_for_now_test')]
+]
+back_for_now_test = InlineKeyboardMarkup(
+    inline_keyboard=back_for_now_test_kb
+)

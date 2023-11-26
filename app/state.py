@@ -24,3 +24,4 @@ class Form(StatesGroup):
     waiting_for_edit_answers = State()
     waiting_for_edit_answers_result = State()
     waiting_for_choosing_my_tests = State()
+    waiting_for_select_for_now_test = State()

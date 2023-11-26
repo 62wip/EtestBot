@@ -169,10 +169,9 @@ class Connection():
                 list_test = []
                 for i in result:
                     list_test.append(Test(i['id'], i['creator_user_id'], datetime.strftime(i['creation_time'], '%Y-%m-%d %H:%M:%S'), i['test_key'], i['test_name'], i['subject_name'], i['all_questions'].split('-_-'), [i.split('-=-') for i in i['all_answers'].split('-_-')], list(map(int, i['right_answers'].split('-_-'))), i['visible_result']))
+                if len(list_test) == 0:
+                    return False
                 return list_test
-            # мейби другая ошибка
-            except IndexError:
-                return False
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
     
@@ -186,10 +185,9 @@ class Connection():
                 list_test_result = []
                 for i in result:
                     list_test_result.append(TestResult(i['solved_test_id'], i['who_done_test'], datetime.strftime(i['completion_time'], '%Y-%m-%d %H:%M:%S'), i['count_correct_answers'], i['count_answers_in_total'], [i.split(':') for i in i['answers_with_mistakes'].split('-_-')]))
+                if len(list_test_result) == 0:
+                    return False
                 return list_test_result
-            # мейби другая ошибка
-            except IndexError:
-                return False
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
 
@@ -203,11 +201,19 @@ class Connection():
                 list_test_result = []
                 for i in result:
                     list_test_result.append(TestResult(i['solved_test_id'], i['who_done_test'], datetime.strftime(i['completion_time'], '%Y-%m-%d %H:%M:%S'), i['count_correct_answers'], i['count_answers_in_total'], [i.split(':') for i in i['answers_with_mistakes'].split('-_-')]))
+                if len(list_test_result) == 0:
+                    return False
                 return list_test_result
-            # мейби другая ошибка
-            except IndexError:
-                return False
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
 
-# Стоит помнить про [0] индекс в курсор fatchall
+    def update_visible_result_for_now_test(self, test_id: int, visible_result: bool) -> None:
+        with self.db.cursor() as cursor:
+            try:
+                execute_visible_result_for_now_test = f'''UPDATE `test` 
+                SET visible_result = {visible_result}
+                WHERE id = {test_id}'''
+                cursor.execute(execute_visible_result_for_now_test)
+                self.db.commit()
+            except pymysql.Error as e:
+                print(f"Error in update table: {e}")

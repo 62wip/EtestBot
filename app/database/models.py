@@ -23,6 +23,9 @@ class Test():
         self.all_questions = all_questions
         self.all_answers = all_answers
         self.right_answers = right_answers
+        self.visible_result = bool(visible_result)
+
+    def update_visible_result(self, visible_result: bool) -> None:
         self.visible_result = visible_result
 
 class TestResult():

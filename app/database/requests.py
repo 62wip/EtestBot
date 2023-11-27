@@ -25,7 +25,7 @@ class Connection():
             try:
                 execute_create_all_tables = [
                     'CREATE TABLE IF NOT EXISTS `users` (id INT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT, username TEXT, fio TEXT, status CHAR(1), `group` TEXT)',
-                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, `test_key` TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answers TEXT, visible_result BIT)',
+                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, `test_key` TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answers TEXT, visible_result BIT(1))',
                     'CREATE TABLE IF NOT EXISTS `test_result` (id INT AUTO_INCREMENT PRIMARY KEY, who_done_test INT, completion_time DATETIME, solved_test_id INT, count_correct_answers INT, count_answers_in_total INT, answers_with_mistakes TEXT)'
                     ]
                 for execute_create_table in execute_create_all_tables:
@@ -87,10 +87,8 @@ class Connection():
         with self.db.cursor() as cursor:
             try:
                 execute_update_status_for_my_profile = f'''UPDATE `users` 
-                SET 
-                status = "{status}", `group` = NULL 
-                WHERE 
-                user_id = {user_id}'''
+                SET status = "{status}", `group` = NULL 
+                WHERE user_id = {user_id}'''
                 cursor.execute(execute_update_status_for_my_profile)
                 self.db.commit()
             except pymysql.Error as e:
@@ -212,7 +210,7 @@ class Connection():
             try:
                 execute_visible_result_for_now_test = f'''UPDATE `test` 
                 SET visible_result = {visible_result}
-                WHERE id = {test_id}'''
+                WHERE `id` = {test_id}'''
                 cursor.execute(execute_visible_result_for_now_test)
                 self.db.commit()
             except pymysql.Error as e:

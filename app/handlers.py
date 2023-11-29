@@ -180,11 +180,9 @@ async def message_for_show_one_test_result(now_test: Test, now_test_result: Test
     for i in range(len(now_test.all_questions)):
         answer += f'<b>{i + 1}.</b> {now_test.all_questions[i]}\n'
         for g in range(len(now_test.all_answers[i])):
-            print(now_test_result.answers_with_mistakes)
-            print([g + 1])
             if now_test.right_answers[i] == g + 1:
                 answer += '✔️'
-            elif [k[1] for k in now_test_result.answers_with_mistakes if i + 1 == k[0]] == [g + 1]:
+            elif [k[1] for k in now_test_result.answers_with_mistakes if k != [] if i + 1 == k[0]] == [g + 1]:
                 answer += '❌'
             else:
                 answer += ' '
@@ -645,7 +643,7 @@ async def show_more_result(callback: CallbackQuery):
 
 @router.message(Form.waiting_for_choosing_my_tests)
 async def select_my_test(message: Message, state: FSMContext) -> None:
-    # try:
+    try:
         context_data = await state.get_data()
         now_test:Test = context_data.get('tests')[int(message.text) - 1]
         test_results:list[TestResult] = connection.select_for_test_results_list_by_test_id(now_test.test_id)
@@ -656,9 +654,9 @@ async def select_my_test(message: Message, state: FSMContext) -> None:
         await state.update_data(now_test=now_test, test_results=test_results)
         data_for_now_test[message.from_user.id] = [now_test, test_results]
         await state.set_state(Form.waiting_for_select_for_now_test)
-    # except (TypeError, IndexError, ValueError):
-    #     await message.answer(f'Укажите существующий номер теста без посторонних знаков (<i>только число</i>)', parse_mode="HTML")
-    #     await state.set_state(Form.waiting_for_choosing_my_tests)
+    except (TypeError, IndexError, ValueError):
+        await message.answer(f'Укажите существующий номер теста без посторонних знаков (<i>только число</i>)', parse_mode="HTML")
+        await state.set_state(Form.waiting_for_choosing_my_tests)
 
 @router.callback_query(F.data == 'preview_for_now_test')
 async def show_more_result(callback: CallbackQuery):
@@ -680,7 +678,6 @@ async def show_more_result(callback: CallbackQuery):
 @router.message(Form.waiting_for_select_for_now_test)
 async def select_for_now_test(message: Message, state: FSMContext) -> None:
     try:
-        # TODO
         context_data = await state.get_data()
         now_test:Test = context_data.get('now_test')
         test_result:list[TestResult] = context_data.get('test_results')

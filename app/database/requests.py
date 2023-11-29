@@ -151,6 +151,7 @@ class Connection():
                 WHERE who_done_test = {user_id} AND solved_test_id = {test_id}'''
                 cursor.execute(execute_select_for_test_result_by_user_id_and_test_id)
                 result = cursor.fetchall()[-1]
+                # TODO
                 return TestResult(result['solved_test_id'], result['who_done_test'], datetime.strftime(result['completion_time'], '%Y-%m-%d %H:%M:%S'), result['count_correct_answers'], result['count_answers_in_total'], [i.split(':') for i in result['answers_with_mistakes'].split('-_-')])
             except IndexError:
                 return False
@@ -182,7 +183,8 @@ class Connection():
                 result = cursor.fetchall()
                 list_test_result = []
                 for i in result:
-                    list_test_result.append(TestResult(i['solved_test_id'], i['who_done_test'], datetime.strftime(i['completion_time'], '%Y-%m-%d %H:%M:%S'), i['count_correct_answers'], i['count_answers_in_total'], [i.split(':') for i in i['answers_with_mistakes'].split('-_-')]))
+                    # TODO
+                    list_test_result.append(TestResult(i['solved_test_id'], i['who_done_test'], datetime.strftime(i['completion_time'], '%Y-%m-%d %H:%M:%S'), i['count_correct_answers'], i['count_answers_in_total'], [g.split(':') for g in i['answers_with_mistakes'].split('-_-')]))
                 if len(list_test_result) == 0:
                     return False
                 return list_test_result
@@ -198,7 +200,10 @@ class Connection():
                 result = cursor.fetchall()
                 list_test_result = []
                 for i in result:
-                    list_test_result.append(TestResult(i['solved_test_id'], i['who_done_test'], datetime.strftime(i['completion_time'], '%Y-%m-%d %H:%M:%S'), i['count_correct_answers'], i['count_answers_in_total'], [i.split(':') for i in i['answers_with_mistakes'].split('-_-')]))
+                    # TODO
+                    print([g for g in i['answers_with_mistakes'].split('-_-')])
+                    # print([list(map(int, [k for k in g.split(':') if k != ['']])) for g in i['answers_with_mistakes'].split('-_-')])
+                    list_test_result.append(TestResult(i['solved_test_id'], i['who_done_test'], datetime.strftime(i['completion_time'], '%Y-%m-%d %H:%M:%S'), i['count_correct_answers'], i['count_answers_in_total'], [list(map(int, [k for k in g.split(':') if k != ['']])) for g in i['answers_with_mistakes'].split('-_-')]))
                 if len(list_test_result) == 0:
                     return False
                 return list_test_result

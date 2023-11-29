@@ -168,6 +168,31 @@ async def message_for_now_test_preview(test: Test) -> str:
             
     return answer
 
+async def message_for_show_one_test_result(now_test: Test, now_test_result: TestResult):
+    user_data = connection.select_for_user_class(now_test_result.who_done_test)
+    answer = f'<b>Результаты теста "{now_test.test_name}" пользователя "{user_data.fio}"</b>\n\n'
+    if user_data.group != None:
+        answer += f'<i>Группа:</i> {user_data.group}\n'
+    answer += f'''<i>Время прохождения</i>: {now_test_result.completion_time}
+
+<u>Ответы на вопросы:</u>
+'''
+    for i in range(len(now_test.all_questions)):
+        answer += f'<b>{i + 1}.</b> {now_test.all_questions[i]}\n'
+        for g in range(len(now_test.all_answers[i])):
+            print(now_test_result.answers_with_mistakes)
+            print([g + 1])
+            if now_test.right_answers[i] == g + 1:
+                answer += '✔️'
+            elif [k[1] for k in now_test_result.answers_with_mistakes if i + 1 == k[0]] == [g + 1]:
+                answer += '❌'
+            else:
+                answer += ' '
+            answer += f'<i>{g + 1})</i> {now_test.all_answers[i][g]}\n'
+
+    answer += f'\n\nРезультаты: <b>{now_test_result.count_correct_answers}/{now_test_result.count_answers_in_total} - {now_test_result.procent_of_right()}%</b>\nРекомендуемая оценка - <b>{now_test_result.recomend_mark()}</b>'
+    return answer
+
 # Обработчик команды /start
 @router.message(Command('start'))
 async def start_command(message: Message, state: FSMContext) -> None:
@@ -620,7 +645,7 @@ async def show_more_result(callback: CallbackQuery):
 
 @router.message(Form.waiting_for_choosing_my_tests)
 async def select_my_test(message: Message, state: FSMContext) -> None:
-    try:
+    # try:
         context_data = await state.get_data()
         now_test:Test = context_data.get('tests')[int(message.text) - 1]
         test_results:list[TestResult] = connection.select_for_test_results_list_by_test_id(now_test.test_id)
@@ -628,12 +653,12 @@ async def select_my_test(message: Message, state: FSMContext) -> None:
         answer_text = await message_for_now_test(now_test, test_results)
         await message.answer(answer_text, parse_mode="HTML", reply_markup=answer_markup)
         await message.answer('Напишите <i>номер результата</i>, о котором вы хотитите узнать подробнее или выберете предложенный пункт', parse_mode="HTML")
-        await state.update_data(now_test=now_test)
+        await state.update_data(now_test=now_test, test_results=test_results)
         data_for_now_test[message.from_user.id] = [now_test, test_results]
-        await state.set_state(Form.waiting_for_edit_answers_result)
-    except (TypeError, IndexError, ValueError):
-        await message.answer(f'Укажите существующий номер теста без посторонних знаков (<i>только число</i>)', parse_mode="HTML")
-        await state.set_state(Form.waiting_for_choosing_my_tests)
+        await state.set_state(Form.waiting_for_select_for_now_test)
+    # except (TypeError, IndexError, ValueError):
+    #     await message.answer(f'Укажите существующий номер теста без посторонних знаков (<i>только число</i>)', parse_mode="HTML")
+    #     await state.set_state(Form.waiting_for_choosing_my_tests)
 
 @router.callback_query(F.data == 'preview_for_now_test')
 async def show_more_result(callback: CallbackQuery):
@@ -653,15 +678,18 @@ async def show_more_result(callback: CallbackQuery):
     await callback.message.answer(f'Отлично, теперь подробные результаты  теста <b>"{data_for_now_test[callback.from_user.id][0].test_name}"</b>открыты для пользователей', parse_mode="HTML")
 
 @router.message(Form.waiting_for_select_for_now_test)
-async def choice_for_now_test(message: Message, state: FSMContext) -> None:
+async def select_for_now_test(message: Message, state: FSMContext) -> None:
     try:
         # TODO
         context_data = await state.get_data()
         now_test:Test = context_data.get('now_test')
+        test_result:list[TestResult] = context_data.get('test_results')
+        now_test_result = test_result[int(message.text) - 1]
+        answer_text = await message_for_show_one_test_result(now_test, now_test_result)
+        await message.answer(answer_text, parse_mode="HTML")
     except (TypeError, IndexError, ValueError):
-        now_test:Test = context_data.get('tests')[int(message.text) - 1]
         await message.answer(f'Укажите существующий номер результата без посторонних знаков (<i>только число</i>)', parse_mode="HTML")
-        await state.set_state(Form.waiting_for_edit_answers_result)
+        await state.set_state(Form.waiting_for_select_for_now_test)
 
 @router.callback_query(F.data == 'back_for_now_test')
 async def show_more_result(callback: CallbackQuery):

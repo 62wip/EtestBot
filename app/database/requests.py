@@ -61,7 +61,7 @@ class Connection():
                 print(f"Error in select from table: {e}")
         return len(result) == 0
     
-    def select_for_user_class(self, user_id: int) -> User:
+    def select_for_user_class_by_user_id(self, user_id: int) -> User:
         with self.db.cursor() as cursor:
             try:
                 execute_select_for_my_profile = f'''SELECT * FROM `users` 
@@ -160,9 +160,9 @@ class Connection():
     def select_for_tests_list_by_user_id(self, user_id: int) -> list[Test]:
         with self.db.cursor() as cursor:
             try:
-                execute_select_for_tests_class_by_user_id = f'''SELECT * FROM `test` 
+                execute_select_for_tests_list_by_user_id = f'''SELECT * FROM `test` 
                 WHERE creator_user_id = {user_id}'''
-                cursor.execute(execute_select_for_tests_class_by_user_id)
+                cursor.execute(execute_select_for_tests_list_by_user_id)
                 result = cursor.fetchall()
                 list_test = []
                 for i in result:
@@ -170,6 +170,19 @@ class Connection():
                 if len(list_test) == 0:
                     return False
                 return list_test
+            except pymysql.Error as e:
+                print(f"Error in select from table: {e}")
+    
+    def select_for_test_class_by_test_id(self, test_id: int) -> Test:
+        with self.db.cursor() as cursor:
+            try:
+                execute_select_for_tests_class_by_test_id = f'''SELECT * FROM `test` 
+                WHERE id = {test_id}'''
+                cursor.execute(execute_select_for_tests_class_by_test_id)
+                result = cursor.fetchall()[0]
+                return Test(result['id'], result['creator_user_id'], datetime.strftime(result['creation_time'], '%Y-%m-%d %H:%M:%S'), result['test_key'], result['test_name'], result['subject_name'], result['all_questions'].split('-_-'), [i.split('-=-') for i in result['all_answers'].split('-_-')], list(map(int, result['right_answers'].split('-_-'))), result['visible_result'])
+            except IndexError:
+                return False
             except pymysql.Error as e:
                 print(f"Error in select from table: {e}")
     
@@ -215,3 +228,16 @@ class Connection():
                 self.db.commit()
             except pymysql.Error as e:
                 print(f"Error in update table: {e}")
+    
+    def delete_test_by_id(self, test_id: int) -> None:
+        with self.db.cursor() as cursor:
+            try:
+                execute_delete_test_by_id = f'''DELETE FROM `test` 
+                WHERE `id` = {test_id}'''
+                cursor.execute(execute_delete_test_by_id)
+                execute_delete_unplanned_test_result_by_test_id = f'''DELETE FROM `test_result` 
+                WHERE solved_test_id = {test_id}'''
+                cursor.execute(execute_delete_unplanned_test_result_by_test_id)
+                self.db.commit()
+            except pymysql.Error as e:
+                print(f"Error in delete from table: {e}")

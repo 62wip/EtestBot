@@ -134,7 +134,7 @@ show_more_result = InlineKeyboardMarkup(
     inline_keyboard=show_more_result_kb
 )
 
-async def markup_for_choice_for_now_test(visible_result: bool):
+async def markup_for_choice_for_now_test(visible_result: bool, bool_test_result: False or list):
     choice_for_now_test_kb = [
     [InlineKeyboardButton(text='Предпросмотр теста', callback_data='preview_for_now_test')]
 ]
@@ -142,6 +142,8 @@ async def markup_for_choice_for_now_test(visible_result: bool):
         choice_for_now_test_kb.append([InlineKeyboardButton(text='Скрыть подробные результаты', callback_data='make_invisible_result_for_now_test')])
     else:
         choice_for_now_test_kb.append([InlineKeyboardButton(text='Открыть подробные результаты', callback_data='make_visible_result_for_now_test')])
+    if bool_test_result is False:
+        choice_for_now_test_kb.append([InlineKeyboardButton(text='Удалить тест', callback_data='delete_now_test')])
     choice_for_now_test = InlineKeyboardMarkup(
         inline_keyboard=choice_for_now_test_kb
     )
@@ -149,7 +151,24 @@ async def markup_for_choice_for_now_test(visible_result: bool):
 
 back_for_now_test_kb = [
     [InlineKeyboardButton(text='Назад', callback_data='back_for_now_test')]
+    
 ]
 back_for_now_test = InlineKeyboardMarkup(
     inline_keyboard=back_for_now_test_kb
+)
+
+choice_for_delete_now_test_kb = [
+    [InlineKeyboardButton(text='Да', callback_data='confirmed_delete_now_test'),
+     InlineKeyboardButton(text='Отмена', callback_data='back_from_delete_now_test')]
+]
+choice_for_delete_now_test = InlineKeyboardMarkup(
+    inline_keyboard=choice_for_delete_now_test_kb
+)
+
+
+show_more_for_now_test_result_kb = [
+    [InlineKeyboardButton(text='Смотреть подробнее', callback_data='show_more_for_now_test_result')]
+]
+show_more_for_now_test_result = InlineKeyboardMarkup(
+    inline_keyboard=show_more_for_now_test_result_kb
 )

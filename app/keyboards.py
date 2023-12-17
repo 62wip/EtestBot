@@ -9,7 +9,7 @@ set_status = ReplyKeyboardMarkup(
     keyboard=set_status_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Выберете кто вы'
+    input_field_placeholder='Кто вы? 🧐'
 )
 
 cancel_kb = [
@@ -19,13 +19,13 @@ cancel_for_feedback = ReplyKeyboardMarkup(
     keyboard=cancel_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Нажмите для отмены'
+    input_field_placeholder='Нажмите для отмены ❌'
 )
 cancel_for_create_test = ReplyKeyboardMarkup(
     keyboard=cancel_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Нажмите для отмены создание теста'
+    input_field_placeholder='Нажмите для отмены создание теста ❌' 
 )
 
 text_for_edit_my_profile_for_student = ['ФИО', 'Статус', 'Группа']
@@ -38,7 +38,7 @@ edit_my_profile_for_student = ReplyKeyboardMarkup(
     keyboard=edit_my_profile_for_student_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Что вы хотите изменить'
+    input_field_placeholder='Что вы хотите изменить? 🧐'
 )
 
 text_for_edit_my_profile_for_teacher = ['ФИО', 'Статус']
@@ -50,7 +50,7 @@ edit_my_profile_for_teacher = ReplyKeyboardMarkup(
     keyboard=edit_my_profile_for_teacher_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Что вы хотите изменить'
+    input_field_placeholder='Что вы хотите изменить? 🧐'
 )
 
 set_question_for_test_kb = [
@@ -61,7 +61,7 @@ set_question_for_test = ReplyKeyboardMarkup(
     keyboard=set_question_for_test_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Выберете пункт'
+    input_field_placeholder='Выберете пункт из списка 📜'
 )
 text_for_choice_for_test_preview = ['Отмена', 'Удалить вопрос', 'Добавить вопрос', 'Опубликовать тест']
 choice_for_test_preview_kb = [
@@ -74,7 +74,7 @@ choice_for_test_preview = ReplyKeyboardMarkup(
     keyboard=choice_for_test_preview_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Выберете пункт'
+    input_field_placeholder='Выберете пункт из списка 📜'
 )
 
 text_for_choosing_visible_result = ['Да', 'Нет', 'Отмена']
@@ -87,7 +87,7 @@ choosing_visible_result = ReplyKeyboardMarkup(
     keyboard=choosing_visible_result_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Выберете пункт'
+    input_field_placeholder='Выберете пункт из списка 📜'
 )
 
 text_for_start_solve_test = ['Начать решать', 'Отмена']
@@ -99,7 +99,7 @@ start_solve_test = ReplyKeyboardMarkup(
     keyboard=start_solve_test_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Выберете пункт'
+    input_field_placeholder='Выберете пункт из списка 📜'
 )
 
 async def markup_for_answers(answers: list) -> ReplyKeyboardMarkup:
@@ -110,7 +110,7 @@ async def markup_for_answers(answers: list) -> ReplyKeyboardMarkup:
     keyboard=answers_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Выберете ответ'
+    input_field_placeholder='Выберете ответ 💥'
     )
     return result_answers
 
@@ -124,11 +124,11 @@ choice_for_result_preview = ReplyKeyboardMarkup(
     keyboard=choice_for_result_preview_kb,
     resize_keyboard=True,
     one_time_keyboard=True,
-    input_field_placeholder='Выберете пункт'
+    input_field_placeholder='Выберете пункт из списка 📜'
     )
 
 show_more_result_kb = [
-    [InlineKeyboardButton(text='Подробнее', callback_data='show_more_test_result')]
+    [InlineKeyboardButton(text='Подробнее 🔎', callback_data='show_more_test_result')]
 ]
 show_more_result = InlineKeyboardMarkup(
     inline_keyboard=show_more_result_kb
@@ -136,7 +136,7 @@ show_more_result = InlineKeyboardMarkup(
 
 async def markup_for_choice_for_now_test(visible_result: bool, bool_test_result: False or list):
     choice_for_now_test_kb = [
-    [InlineKeyboardButton(text='Предпросмотр теста', callback_data='preview_for_now_test')]
+    [InlineKeyboardButton(text='Предпросмотр теста 📢', callback_data='preview_for_now_test')]
 ]
     if visible_result:
         choice_for_now_test_kb.append([InlineKeyboardButton(text='Скрыть подробные результаты', callback_data='make_invisible_result_for_now_test')])

@@ -41,8 +41,7 @@ async def message_for_profile(user_id: int) -> str:
         answer += f'<i>Статус</i>: Ученик\n<i>Группа/класс</i>: {user_data.group}'
     return answer
 
-async def message_for_test_preview(user_id: int, state: FSMContext) -> str:
-    context_data = await state.get_data()
+async def message_for_test_preview(user_id: int, context_data: dict) -> str:
     user_data = connection.select_for_user_class_by_user_id(user_id)
     answer = f'''<b><u>Предпосмотр теста 📜</u></b>:
 
@@ -84,8 +83,7 @@ async def message_for_finded_test(test: Test):
             answer += f' <i>{g + 1})</i> {test.all_answers[i][g]}\n'
     return answer
 
-async def message_for_result_review(state: FSMContext) -> str:
-    context_data = await state.get_data()
+async def message_for_result_review(context_data: dict) -> str:
     test:Test = context_data.get('test')
     answer = f'''<b><u>Предпосмотр решения 💬</u></b>:
 
@@ -143,7 +141,7 @@ async def message_for_my_test(tests: list[Test]) -> str:
     return answer
 
 async def message_for_now_test(test: Test, test_results: list[TestResult] or False) -> str:
-    answer = f'Тест <b>"{test.test_name}"</b>\nКлюч доступа: <b><code>{test.test_key}</code></b> 🔐\nКол-во вопросов: {len(test.all_questions)} 📈\n\n' 
+    answer = f'Тест <b>"{test.test_name}"</b>\nКлюч доступа: <b>{test.test_key}</b> 🔐\nКол-во вопросов: {len(test.all_questions)} 📈\n\n' 
     if not(test_results):
         answer += 'Тест пока <i>никто не прошел ⌛</i>'
     else:
@@ -200,17 +198,6 @@ async def message_for_my_result(test_results: list[TestResult]):
         answer += f'{i + 1}. Тест <b>"{test.test_name}"</b> - <b>{test_results[i].procent_of_right()} %</b>\n'
     return answer
 
-async def message_for_now_test(test: Test, test_results: list[TestResult] or False) -> str:
-    answer = f'Тест <b>"{test.test_name}"</b>\nКлюч доступа: <b>{test.test_key}</b> 🔐\nКол-во вопросов: {len(test.all_questions)} 📈\n\n'
-    if not(test_results):
-        answer += 'Тест пока <i>никто не проходил</i>'
-    else:
-        answer += '<i>Рeзультаты других людей:</i>\n'
-        for i in range(len(test_results)):
-            user_who_done_test = connection.select_for_user_class_by_user_id(test_results[i].who_done_test)
-            answer += f'<b>{i + 1}. {user_who_done_test.fio}</b> - <i>{test_results[i].procent_of_right()}%</i>; рекомендуемая оценка: <i>{test_results[i].recomend_mark()}</i>\n'
-    return answer
-
 async def message_for_checking_test_result(test_result: TestResult, test: Test) -> str:
     user_data = connection.select_for_user_class_by_user_id(test_result.who_done_test)
     answer = f'Результаты теста <b>"{test.test_name}"</b>\n'
@@ -257,7 +244,7 @@ async def start_command(message: Message, state: FSMContext) -> None:
 @router.message(Command('how_to_use'))
 async def how_to_use_command(message: Message) -> None:
     # Отправляем сообщение в ответ на команду /how_to_use
-    await message.answer('''• Чтобы посмотреть статистику или изменить профиль, используйте команду /my_profile 🙎🏻‍♂️
+    await message.answer('''<b>• Чтобы посмотреть статистику или изменить профиль, используйте команду /my_profile 🙎🏻‍♂️
 
 • Если вы хотите создать тест, пропишите /create_test 💡
 
@@ -267,7 +254,7 @@ async def how_to_use_command(message: Message) -> None:
 
 • Прописав /my_result, вы сможете увидеть результаты тестов, которые вы решали 🍁
 
-• Прописав /feedback, вы сможете оставить обратную связь 💬''', parse_mode="HTML")
+• Прописав /feedback, вы сможете оставить обратную связь 💬</b>''', parse_mode="HTML")
 
 # Обработчик команды /my_profile
 @router.message(Command('my_profile'))
@@ -308,7 +295,7 @@ async def my_test_command(message: Message, state: FSMContext) -> None:
         await state.update_data(tests=tests)
         answer_text = await message_for_my_test(tests)
         await message.answer(answer_text, parse_mode="HTML")
-        await message.answer('<b>Напишите <u>номер теста</u>, о котором вы хотите узнать подробнее ⚙️', parse_mode="HTML")
+        await message.answer('<b>Напишите <u>номер теста</u>, о котором вы хотите узнать подробнее ⚙️</b>', parse_mode="HTML")
         await state.set_state(Form.waiting_for_choosing_my_tests)
 
 # Обработчик команды /my_result
@@ -328,7 +315,7 @@ async def my_result_command(message: Message, state: FSMContext) -> None:
 @router.message(Command('feedback'))
 async def feedback_command(message: Message, state: FSMContext) -> None:
     # Отправляем сообщение в ответ на команду /feedback
-    await message.answer('Напишите сообщение для <i>обратной связи</i> 💬\nЧтобы отменить отправку нажмите на кнопку <b>Отмена ⛔</b>', parse_mode="HTML", reply_markup=kb.cancel_for_feedback)
+    await message.answer('Напишите сообщение для <i>обратной связи</i> 💬\nЧтобы отменить отправку нажмите на кнопку \n<b>Отмена ⛔</b>', parse_mode="HTML", reply_markup=kb.cancel_for_feedback)
     await state.set_state(Form.waiting_for_feedback)
 
 @router.message(Form.waiting_for_set_fio)
@@ -346,7 +333,7 @@ async def set_fio_state(message: Message, state: FSMContext) -> None:
 async def set_status_state(message: Message, state: FSMContext) -> None:
     if message.text == 'Преподаватель':
         context_data = await state.get_data()
-        await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регистрация завершена. Чтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use 🧩', parse_mode="HTML")
+        await message.answer(f'Отлично, <u>{context_data.get("fio")}</u>! Регистрация завершена. \n\nЧтобы узнать, как пользоваться ботом <i>пропиши команду</i> /how_to_use 🧩', parse_mode="HTML")
         await state.clear()
         user = User(message.from_user.id, message.from_user.username, context_data.get('fio'), 'T', None)
         connection.insert_new_user_id(user)
@@ -373,7 +360,7 @@ async def set_group_state(message: Message, state: FSMContext) -> None:
 
 @router.message(Form.waiting_for_feedback)
 async def feedback_state(message: Message, state: FSMContext, bot: Bot) -> None:
-    if message.text == 'Отмена ❌':
+    if message.text == 'Отмена':
         await message.answer('<i>Отправка отменена</i>', parse_mode="HTML")
     else:
         await message.answer('<i>Ваше сообщение передано</i>', parse_mode="HTML")
@@ -471,7 +458,8 @@ async def set_test_question_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u> 📝', parse_mode="HTML")
         await state.clear()
     elif message.text == 'Предпросмотр':
-        answer_text = await message_for_test_preview(message.from_user.id, state)
+        context_data = await state.get_data()
+        answer_text = await message_for_test_preview(message.from_user.id, context_data)
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
         await state.set_state(Form.waiting_for_test_preview)
     else:
@@ -536,24 +524,33 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
         await message.answer('Вы отменили <u>создание теста</u> ❌', parse_mode="HTML")
         await state.clear()
     elif message.text == 'Предпросмотр':
-        answer_text = await message_for_test_preview(message.from_user.id, state)
+        context_data = await state.get_data()
+        answer_text = await message_for_test_preview(message.from_user.id, context_data)
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
         await state.set_state(Form.waiting_for_test_preview)
     else:
-        try:
-            context_data = await state.get_data()
-            await state.update_data(questions=context_data.get('questions').pop(int(message.text) - 1), answers=context_data.get('answers').pop(int(message.text) - 1), right_answers=context_data.get('right_answers').pop(int(message.text) - 1))
-            await message.answer(f'Вопрос №{message.text} <i>удален</i> из теста ❌', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
-            if len(context_data.get('questions')) == 0:
-                await message.answer('Отлично, теперь отправьте 1-й вопрос ✅', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
-                await state.set_state(Form.waiting_for_test_question)
+        # try:
+            if int(message.text) > 0:
+                context_data = await state.get_data()
+                print(context_data.get('right_answers'))
+                context_data.get('questions').pop(int(message.text) - 1)
+                context_data.get('answers').pop(int(message.text) - 1)
+                context_data.get('right_answers').pop(int(message.text) - 1)
+                await state.update_data(questions=context_data.get('questions'), answers=context_data.get('answers'), right_answers=context_data.get('right_answers'))
+                await message.answer(f'Вопрос №{message.text} <i>удален</i> из теста ❌', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
+                print(context_data.get('right_answers'))
+                if len(context_data.get('questions')) == 0:
+                    await message.answer('Отлично, теперь отправьте 1-й вопрос ✅', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
+                    await state.set_state(Form.waiting_for_test_question)
+                else:
+                    answer_text = await message_for_test_preview(message.from_user.id, context_data)
+                    await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
+                    await state.set_state(Form.waiting_for_test_preview)
             else:
-                answer_text = await message_for_test_preview(message.from_user.id, state)
-                await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
-                await state.set_state(Form.waiting_for_test_preview)
-        except (TypeError, IndexError):
-            await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>) 🎯', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
-            await state.set_state(Form.waiting_for_del_question)
+                raise IndexError('The number less than one')
+        # except (TypeError, IndexError):
+        #     await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>) 🎯', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
+        #     await state.set_state(Form.waiting_for_del_question)
 
 @router.message(Form.waiting_for_test_preview, F.text.in_(kb.text_for_choosing_visible_result))
 async def set_choosing_visible_result(message: Message, state: FSMContext) -> None:
@@ -569,7 +566,7 @@ async def set_choosing_visible_result(message: Message, state: FSMContext) -> No
     test = Test(None, message.from_user.id, datetime.now(), key, context_data.get('test_name'), context_data.get('subject_name'), context_data.get('questions'), context_data.get('answers'), context_data.get('right_answers'), visible_result)
     connection.insert_new_test(test)
     await message.answer(f'Тест "{context_data.get("test_name")}" создан ✅\nЧтобы пройти тест вставте данный ключ после комадны /solve_test (вы не можете пройти свой-же тест) 🔒', parse_mode="HTML")
-    await message.answer(str(key), parse_mode="HTML")
+    await message.answer(f'`{key}`', parse_mode="MarkdownV2")
     await state.clear()
 
 @router.message(Form.waiting_for_test_key)
@@ -636,7 +633,7 @@ async def solving_question(message: Message, state: FSMContext) -> None:
         await state.update_data(now_question=context_data.get("now_question") + 1)
         await state.set_state(Form.waiting_for_solve_question)
     elif form_answer:
-        answer_text = await message_for_result_review(state)
+        answer_text = await message_for_result_review(context_data)
         await message.answer(f'Вы <i>ответили</i> на все вопросы ✅', parse_mode="HTML")
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_result_preview)
         await state.set_state(Form.waiting_for_result_preview_aftermath)
@@ -698,7 +695,7 @@ async def edit_answer(message: Message, state: FSMContext) -> None:
         test_result[context_data.get('now_edit_question') - 1] = [0, test.all_answers[context_data.get('now_edit_question') - 1].index(variant) + 1]
         await state.update_data(test_result=test_result)
     if form_answer:
-        answer_text = await message_for_result_review(state)
+        answer_text = await message_for_result_review(context_data)
         await message.answer(f'Ответ <i>изменен</i> ✅', parse_mode="HTML")
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_result_preview)
         await state.set_state(Form.waiting_for_result_preview_aftermath)
@@ -734,13 +731,13 @@ async def show_more_result(callback: CallbackQuery):
 async def show_more_result(callback: CallbackQuery):
     connection.update_visible_result_for_now_test(data_for_now_test[callback.from_user.id][0].test_id, False)
     data_for_now_test[callback.from_user.id][0].update_visible_result(False)
-    await callback.message.answer(f'Отлично, теперь подробные результаты теста <b>"{data_for_now_test[callback.from_user.id][0].test_name}"📝\n</b>Они скрыты для пользователей 👩🏽‍💻', parse_mode="HTML")
+    await callback.message.answer(f'Отлично, теперь подробные результаты теста <b>"{data_for_now_test[callback.from_user.id][0].test_name}"📝\n</b>скрыты для пользователей 👩🏽‍💻', parse_mode="HTML")
 
 @router.callback_query(F.data == 'make_visible_result_for_now_test')
 async def show_more_result(callback: CallbackQuery):
     connection.update_visible_result_for_now_test(data_for_now_test[callback.from_user.id][0].test_id, True)
     data_for_now_test[callback.from_user.id][0].update_visible_result(True)
-    await callback.message.answer(f'Отлично, теперь подробные результаты теста <b>"{data_for_now_test[callback.from_user.id][0].test_name}" 📝\n</b>Они доступны для пользователей 👩🏽‍💻', parse_mode="HTML")
+    await callback.message.answer(f'Отлично, теперь подробные результаты теста <b>"{data_for_now_test[callback.from_user.id][0].test_name}" 📝\n</b>доступны для пользователей 👩🏽‍💻', parse_mode="HTML")
 
 @router.callback_query(F.data == 'delete_now_test')
 async def show_more_result(callback: CallbackQuery):
@@ -775,7 +772,7 @@ async def select_for_now_test(message: Message, state: FSMContext) -> None:
 
 @router.callback_query(F.data == 'back_for_now_test')
 async def show_more_result(callback: CallbackQuery):
-    answer_markup = await kb.markup_for_choice_for_now_test(data_for_now_test[callback.from_user.id][0].visible_result)
+    answer_markup = await kb.markup_for_choice_for_now_test(data_for_now_test[callback.from_user.id][0].visible_result, data_for_now_test[callback.from_user.id][1])
     answer_text = await message_for_now_test(data_for_now_test[callback.from_user.id][0], data_for_now_test[callback.from_user.id][1])
     await callback.message.edit_text(answer_text, parse_mode="HTML", reply_markup=answer_markup)
 

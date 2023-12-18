@@ -25,8 +25,8 @@ class Connection():
             try:
                 execute_create_all_tables = [
                     'CREATE TABLE IF NOT EXISTS `users` (id INT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT, username TEXT, fio TEXT, status CHAR(1), `group` TEXT)',
-                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id INT, creation_time DATETIME, `test_key` TEXT,test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answers TEXT, visible_result BIT(1))',
-                    'CREATE TABLE IF NOT EXISTS `test_result` (id INT AUTO_INCREMENT PRIMARY KEY, who_done_test INT, completion_time DATETIME, solved_test_id INT, count_correct_answers INT, count_answers_in_total INT, answers_with_mistakes TEXT)'
+                    'CREATE TABLE IF NOT EXISTS `test` (id INT AUTO_INCREMENT PRIMARY KEY, creator_user_id BIGINT, creation_time DATETIME, `test_key` TEXT, test_name TEXT, subject_name TEXT, all_questions TEXT, all_answers TEXT, right_answers TEXT, visible_result INT)',
+                    'CREATE TABLE IF NOT EXISTS `test_result` (id INT AUTO_INCREMENT PRIMARY KEY, who_done_test BIGINT, completion_time DATETIME, solved_test_id INT, count_correct_answers INT, count_answers_in_total INT, answers_with_mistakes TEXT)'
                     ]
                 for execute_create_table in execute_create_all_tables:
                     cursor.execute(execute_create_table)
@@ -114,7 +114,7 @@ class Connection():
                     subject_name = f'"{test.subject_name}"'
                 execute_insert_new_test = f'''INSERT INTO `test` (creator_user_id, creation_time, test_key, test_name, subject_name, all_questions, all_answers, right_answers, visible_result) 
                 VALUES 
-                ({test.creator_user_id}, "{test.creation_time}", "{str(test.test_key)}", "{test.test_name}", {subject_name}, "{'-_-'.join(test.all_questions)}", "{'-_-'.join(['-=-'.join(sublist) for sublist in test.all_answers])}", "{'-_-'.join(list(map(str, test.right_answers)))}", {test.visible_result})'''
+                ({test.creator_user_id}, "{test.creation_time}", "{str(test.test_key)}", "{test.test_name}", {subject_name}, "{'-_-'.join(test.all_questions)}", "{'-_-'.join(['-=-'.join(sublist) for sublist in test.all_answers])}", "{'-_-'.join(list(map(str, test.right_answers)))}", {int(test.visible_result)})'''
                 cursor.execute(execute_insert_new_test)
                 self.db.commit()
             except pymysql.Error as e:

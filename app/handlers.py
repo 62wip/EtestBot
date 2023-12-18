@@ -219,7 +219,8 @@ async def message_for_more_now_test_result(test_result: TestResult, test: Test) 
     answer += f'''<i>Автор теста</i>: {user_data.fio}
 <i>Время прохождения</i>: {test_result.completion_time}
 
-<u>Ответы на вопросы:</u>'''
+<u>Ответы на вопросы:</u>
+'''
     for i in range(len(test.all_questions)):
         answer += f'<b>{i + 1}.</b> {test.all_questions[i]}\n'
         for g in range(len(test.all_answers[i])):
@@ -529,16 +530,14 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_test_preview)
         await state.set_state(Form.waiting_for_test_preview)
     else:
-        # try:
+        try:
             if int(message.text) > 0:
-                context_data = await state.get_data()
                 print(context_data.get('right_answers'))
                 context_data.get('questions').pop(int(message.text) - 1)
                 context_data.get('answers').pop(int(message.text) - 1)
                 context_data.get('right_answers').pop(int(message.text) - 1)
                 await state.update_data(questions=context_data.get('questions'), answers=context_data.get('answers'), right_answers=context_data.get('right_answers'))
                 await message.answer(f'Вопрос №{message.text} <i>удален</i> из теста ❌', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
-                print(context_data.get('right_answers'))
                 if len(context_data.get('questions')) == 0:
                     await message.answer('Отлично, теперь отправьте 1-й вопрос ✅', parse_mode="HTML",  reply_markup=kb.cancel_for_create_test)
                     await state.set_state(Form.waiting_for_test_question)
@@ -548,9 +547,9 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
                     await state.set_state(Form.waiting_for_test_preview)
             else:
                 raise IndexError('The number less than one')
-        # except (TypeError, IndexError):
-        #     await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>) 🎯', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
-        #     await state.set_state(Form.waiting_for_del_question)
+        except (TypeError, IndexError):
+            await message.answer(f'Укажите существующий номер вопроса без посторонних знаков (<i>только число</i>) 🎯', parse_mode="HTML",  reply_markup=kb.set_question_for_test)
+            await state.set_state(Form.waiting_for_del_question)
 
 @router.message(Form.waiting_for_test_preview, F.text.in_(kb.text_for_choosing_visible_result))
 async def set_choosing_visible_result(message: Message, state: FSMContext) -> None:
@@ -633,6 +632,7 @@ async def solving_question(message: Message, state: FSMContext) -> None:
         await state.update_data(now_question=context_data.get("now_question") + 1)
         await state.set_state(Form.waiting_for_solve_question)
     elif form_answer:
+        context_data = await state.get_data()
         answer_text = await message_for_result_review(context_data)
         await message.answer(f'Вы <i>ответили</i> на все вопросы ✅', parse_mode="HTML")
         await message.answer(answer_text, parse_mode="HTML", reply_markup=kb.choice_for_result_preview)

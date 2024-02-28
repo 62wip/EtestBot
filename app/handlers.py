@@ -532,7 +532,7 @@ async def set_test_answer_state(message: Message, state: FSMContext) -> None:
     else:
         try:
             if int(message.text) > 0:
-                print(context_data.get('right_answers'))
+                context_data = await state.get_data()
                 context_data.get('questions').pop(int(message.text) - 1)
                 context_data.get('answers').pop(int(message.text) - 1)
                 context_data.get('right_answers').pop(int(message.text) - 1)
